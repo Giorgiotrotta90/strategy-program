@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Program | Training Manager</title>
+    <!-- Tailwind CSS per la UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js per le Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome per le icone -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neon: '#00f2fe',
+                        darkbg: '#0f172a',
+                        panelbg: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar per un look più "IDE" */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f2fe; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom Toast Notification */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 50; }
+        .toast { background-color: #00f2fe; color: #0f172a; padding: 12px 24px; border-radius: 6px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: opacity 0.5s; }
+    </style>
+</head>
+<body class="bg-darkbg text-gray-200 font-sans min-h-screen flex flex-col md:flex-row">
+
+    <!-- Sidebar Navigation (Main Menu) -->
+    <nav class="w-full md:w-64 bg-panelbg border-b md:border-b-0 md:border-r border-gray-700 p-4 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center space-x-3 mb-8 text-neon">
+                <i class="fas fa-dumbbell text-2xl"></i>
+                <h1 class="text-xl font-bold tracking-wider uppercase">Strategy Program</h1>
+            </div>
+            <ul class="space-y-2">
+                <li><button onclick="switchTab('dashboard')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition bg-gray-700 text-white" data-target="dashboard"><i class="fas fa-home w-6"></i> Dashboard</button></li>
+                <li><button onclick="switchTab('season')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition" data-target="season"><i class="fas fa-calendar-alt w-6"></i> Stagione</button></li>
+                <li><button onclick="switchTab('workout')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition" data-target="workout"><i class="fas fa-clipboard-list w-6"></i> Allenamento</button></li>
+                <li><button onclick="switchTab('analytics')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition" data-target="analytics"><i class="fas fa-chart-line w-6"></i> Analisi</button></li>
+                <li><button onclick="switchTab('database')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition" data-target="database"><i class="fas fa-database w-6"></i> Database I/O</button></li>
+            </ul>
+        </div>
+        <div class="mt-8 text-xs text-gray-500 text-center">
+            System v1.2 | Status: <span class="text-green-400">Online</span>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+        
+        <!-- DASHBOARD TAB -->
+        <section id="dashboard" class="tab-content active">
+            <h2 class="text-3xl font-bold mb-6 border-b border-gray-700 pb-2">System Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Workout Eseguiti</h3>
+                    <p class="text-4xl font-bold text-neon" id="stat-total-workouts">0</p>
+                </div>
+                <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Volume Totale (Kg)</h3>
+                    <p class="text-4xl font-bold text-neon" id="stat-total-volume">0</p>
+                </div>
+                <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-2">Fase Attuale</h3>
+                    <div id="stat-current-phase-container">
+                        <p class="text-xl font-bold text-white mt-1"><i class="fas fa-folder-open text-gray-400 mr-2 text-sm"></i><span id="stat-current-macro">Nessun Macro</span></p>
+                        <p class="text-lg font-bold text-neon mt-1"><i class="fas fa-layer-group text-gray-400 mr-2 text-sm"></i><span id="stat-current-meso">Nessun Meso</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h3 class="text-xl font-bold mb-4"><i class="fas fa-history mr-2"></i>Ultimi Log di Sistema</h3>
+                <div id="recent-logs-container" class="space-y-3">
+                    <!-- Popolato dinamicamente -->
+                    <p class="text-gray-400 italic">Nessun allenamento registrato. Inizia a compilare codice in sala pesi.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- STAGIONE (SEASON PLANNER) TAB -->
+        <section id="season" class="tab-content">
+            <div id="season-main-view">
+                <h2 class="text-3xl font-bold mb-6 border-b border-gray-700 pb-2">Pianificazione Stagionale (Gerarchia)</h2>
+                
+                <!-- CREAZIONE MACROCICLO -->
+                <div class="bg-panelbg p-6 rounded-xl border border-neon/50 shadow-[0_0_15px_rgba(0,242,254,0.1)] mb-8">
+                    <h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-folder-plus text-neon mr-2"></i>Inizializza Nuovo Macrociclo</h3>
+                    <form id="macro-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Tipo Macrociclo (Fase Stagionale)</label>
+                            <select id="macro-name" required class="w-full bg-darkbg border border-gray-600 rounded p-2 text-white focus:border-neon focus:outline-none cursor-pointer">
+                                <option value="" disabled selected>-- Seleziona Fase --</option>
+                                <option value="Off Season">Off Season (Costruzione)</option>
+                                <option value="Mini Cut">Mini Cut (Definizione Breve)</option>
+                                <option value="Pre Contest">Pre Contest (Preparazione Gara)</option>
+                                <option value="Recovery">Recovery (Transizione/Scarico)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Data Inizio</label>
+                            <input type="date" id="macro-start" required class="w-full bg-darkbg border border-gray-600 rounded p-2 text-white focus:border-neon focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Data Fine</label>
+                            <input type="date" id="macro-end" required class="w-full bg-darkbg border border-gray-600 rounded p-2 text-white focus:border-neon focus:outline-none">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-neon text-darkbg font-bold py-2 px-4 rounded hover:bg-cyan-300 transition">
+                                <i class="fas fa-hdd mr-2"></i> Alloca Macrociclo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- RENDER ALBERO MACRO/MESO -->
+                <div id="macrocycles-container" class="space-y-6">
+                    <!-- Generato dinamicamente via JS -->
+                </div>
+            </div>
+
+            <!-- VISTA DETTAGLIO MESOCICLO (COSTRUTTORE SCHEDE) -->
+            <div id="season-meso-view" class="hidden">
+                <button onclick="closeMesocycle()" class="mb-6 text-gray-400 hover:text-white transition flex items-center bg-gray-800 px-4 py-2 rounded-lg border border-gray-600 w-fit"><i class="fas fa-arrow-left mr-2"></i>Torna alla Stagione</button>
+                
+                <div class="bg-panelbg p-6 rounded-xl border border-neon shadow-[0_0_15px_rgba(0,242,254,0.1)] mb-8">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-1">Costruttore Schede - Mesociclo Selezionato</h3>
+                    <h2 id="meso-view-title" class="text-3xl font-bold text-white mb-2">Nome Mesociclo</h2>
+                    <p id="meso-view-dates" class="text-sm text-neon font-bold"><i class="fas fa-calendar-alt mr-2"></i>Inizio - Fine</p>
+                </div>
+
+                <!-- Aggiunta Nuova Scheda -->
+                <div class="bg-darkbg p-6 rounded-xl border border-gray-700 shadow-lg mb-8">
+                    <h4 class="text-lg font-bold mb-4 text-white"><i class="fas fa-layer-group text-neon mr-2"></i>Crea Nuova Scheda (es. Giorno A, Push Day)</h4>
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <input type="text" id="routine-name-input" placeholder="Nome Scheda..." class="flex-1 bg-panelbg border border-gray-600 rounded p-3 text-white focus:border-neon focus:outline-none">
+                        <button onclick="addRoutine()" class="bg-neon text-darkbg font-bold py-3 px-6 rounded hover:bg-cyan-300 transition">
+                            <i class="fas fa-plus mr-2"></i>Crea Scheda
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista delle Schede del Mesociclo -->
+                <div id="routines-container" class="space-y-6">
+                    <!-- Popolato dinamicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ALLENAMENTO (WORKOUT BUILDER) TAB -->
+        <section id="workout" class="tab-content">
+            <h2 class="text-3xl font-bold mb-6 border-b border-gray-700 pb-2">Programmazione e Log Allenamento</h2>
+            
+            <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg mb-8">
+                
+                <!-- IMPORTA SCHEDA DAL MESOCICLO -->
+                <div id="load-routine-container" class="hidden mb-6 p-5 bg-darkbg rounded-xl border border-neon/30 shadow-[0_0_10px_rgba(0,242,254,0.05)]">
+                    <label class="block text-sm font-bold text-neon mb-3 uppercase tracking-wider"><i class="fas fa-download mr-2"></i>Carica Scheda dal Mesociclo Attivo</label>
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <select id="active-routines-select" class="flex-1 bg-panelbg border border-gray-600 rounded p-3 text-white focus:border-neon focus:outline-none cursor-pointer">
+                            <!-- Popolato dinamicamente -->
+                        </select>
+                        <button onclick="loadRoutineToDraft()" class="bg-gray-700 text-white font-bold py-3 px-6 rounded hover:bg-gray-600 transition border border-gray-500 w-full md:w-auto">
+                            Importa nel Buffer
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between mb-6 gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm text-gray-400 mb-1">Data Sessione</label>
+                        <input type="date" id="workout-date" class="w-full md:w-auto bg-darkbg border border-gray-600 rounded p-2 text-white focus:border-neon focus:outline-none">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm text-gray-400 mb-1">Gruppo Muscolare / Focus</label>
+                        <input type="text" id="workout-focus" placeholder="es. Push Day, Pull, Gambe" class="w-full bg-darkbg border border-gray-600 rounded p-2 text-white focus:border-neon focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Buffer (Draft) dell'allenamento attuale -->
+                <div id="workout-buffer" class="hidden mb-6 bg-darkbg p-4 rounded border border-gray-700">
+                    <h4 class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">Buffer Sessione Attuale</h4>
+                    <ul id="draft-exercises-list" class="space-y-2 text-sm">
+                        <!-- Esercizi temporanei -->
+                    </ul>
+                </div>
+
+                <button onclick="commitWorkout()" class="w-full bg-neon text-darkbg font-bold py-3 px-4 rounded hover:bg-cyan-300 transition text-lg shadow-lg shadow-cyan-500/30">
+                    <i class="fas fa-save mr-2"></i> Commit Workout to Database
+                </button>
+            </div>
+        </section>
+
+        <!-- ANALISI (ANALYTICS) TAB -->
+        <section id="analytics" class="tab-content">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-gray-700 pb-2 gap-4">
+                <h2 class="text-3xl font-bold">Analisi Dati (Telemetry)</h2>
+                
+                <!-- MODULO: FILTRO TEMPORALE (DATA SCOPING) -->
+                <div class="w-full md:w-auto bg-darkbg p-2 rounded-lg border border-neon/50 shadow-[0_0_10px_rgba(0,242,254,0.1)] flex items-center">
+                    <label class="text-xs font-bold text-neon uppercase tracking-wider mr-3 hidden md:block"><i class="fas fa-filter mr-1"></i> Scope:</label>
+                    <select id="analytics-timeframe" onchange="renderAnalyticsChart()" class="w-full md:w-64 bg-panelbg border border-gray-600 rounded p-2 text-white focus:border-neon focus:outline-none cursor-pointer text-sm font-bold">
+                        <option value="all">🌍 Tutto lo Storico Globale</option>
+                        <!-- Popolato dinamicamente da JS -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- MODULO: KPI SINTETICI (Aggiornati dal filtro) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="analytics-kpi-container">
+                <div class="bg-panelbg p-4 rounded-xl border border-gray-700 shadow-lg text-center">
+                    <h4 class="text-gray-400 text-[10px] md:text-xs uppercase tracking-wider mb-1"><i class="fas fa-dumbbell mr-1"></i>Workout</h4>
+                    <p class="text-2xl font-bold text-white" id="an-stat-workouts">0</p>
+                </div>
+                <div class="bg-panelbg p-4 rounded-xl border border-gray-700 shadow-lg text-center">
+                    <h4 class="text-gray-400 text-[10px] md:text-xs uppercase tracking-wider mb-1"><i class="fas fa-weight-hanging mr-1"></i>Vol. Tot (Kg)</h4>
+                    <p class="text-2xl font-bold text-neon" id="an-stat-volume">0</p>
+                </div>
+                <div class="bg-panelbg p-4 rounded-xl border border-neon/30 shadow-[0_0_10px_rgba(168,85,247,0.1)] text-center relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-8 h-8 bg-purple-500/20 rounded-bl-full"></div>
+                    <h4 class="text-purple-400 text-[10px] md:text-xs uppercase font-bold tracking-wider mb-1"><i class="fas fa-layer-group mr-1"></i>Serie Totali</h4>
+                    <p class="text-2xl font-bold text-white" id="an-stat-sets">0</p>
+                </div>
+                <div class="bg-panelbg p-4 rounded-xl border border-gray-700 shadow-lg text-center">
+                    <h4 class="text-gray-400 text-[10px] md:text-xs uppercase tracking-wider mb-1"><i class="fas fa-fire mr-1"></i>RPE Medio</h4>
+                    <p class="text-2xl font-bold text-orange-500" id="an-stat-rpe">-</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- CHART 1: Trend Volume Load -->
+                <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg flex flex-col">
+                    <h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-chart-line text-neon mr-2"></i>Trend Volume Load</h3>
+                    <p class="text-xs text-gray-400 mb-4 uppercase tracking-wider">Tonnellaggio totale (Serie × Reps × Carico) nel tempo.</p>
+                    <div class="w-full flex-1 min-h-[250px] relative">
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- CHART 2: Distribuzione Target Muscolari + LISTA SERIE -->
+                <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg flex flex-col">
+                    <h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-bullseye text-purple-400 mr-2"></i>Focus e Serie Allenanti</h3>
+                    <p class="text-xs text-gray-400 mb-4 uppercase tracking-wider">Distribuzione del volume in base alle <strong>Serie (Sets)</strong> per gruppo muscolare.</p>
+                    <div class="w-full flex-1 flex flex-col xl:flex-row gap-6 items-center justify-center min-h-[250px]">
+                        <!-- Grafico a Ciambella -->
+                        <div class="w-full xl:w-1/2 h-48 xl:h-full relative">
+                            <canvas id="muscleChart"></canvas>
+                        </div>
+                        <!-- Lista Dettagliata Serie -->
+                        <div class="w-full xl:w-1/2 h-48 xl:h-full overflow-y-auto pr-2" style="max-height: 250px;">
+                            <ul id="muscle-sets-list" class="space-y-2 w-full">
+                                <!-- Popolato dinamicamente da JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CHART 3: Trend RPE Medio -->
+                <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg lg:col-span-2">
+                    <h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-fire text-orange-500 mr-2"></i>Trend Intensità (RPE Medio)</h3>
+                    <p class="text-xs text-gray-400 mb-4 uppercase tracking-wider">Media dello Sforzo Percepito calcolata su tutti gli esercizi della sessione. Utile per prevenire il sovrallenamento del Sistema Nervoso (CNS).</p>
+                    <div class="w-full h-72 relative">
+                        <canvas id="rpeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- MODULO: CALENDARIO ALLENAMENTI (Registro Log) -->
+            <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-gray-700 pb-4">
+                    <h3 class="text-xl font-bold text-white mb-4 md:mb-0"><i class="fas fa-calendar-alt text-neon mr-2"></i>Registro Log (Calendario)</h3>
+                    <div class="flex space-x-2 items-center bg-darkbg p-1.5 rounded-lg border border-gray-600">
+                        <button onclick="changeCalendarMonth(-1)" class="p-2 bg-gray-700 rounded hover:bg-neon hover:text-darkbg transition text-sm"><i class="fas fa-chevron-left"></i></button>
+                        <span id="calendar-month-year" class="font-bold text-sm min-w-[130px] text-center uppercase tracking-wide text-gray-200">Mese Anno</span>
+                        <button onclick="changeCalendarMonth(1)" class="p-2 bg-gray-700 rounded hover:bg-neon hover:text-darkbg transition text-sm"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-[10px] md:text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
+                </div>
+                
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2">
+                    <!-- Giorni generati dinamicamente via JS -->
+                </div>
+
+                <!-- Dettaglio Allenamento del giorno selezionato (Log Viewer) -->
+                <div id="calendar-workout-details" class="mt-6 p-5 bg-darkbg rounded-xl border border-neon/50 shadow-[0_0_15px_rgba(0,242,254,0.1)] hidden transition-all">
+                    <!-- Popolato dinamicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- DATABASE (I/O) TAB -->
+        <section id="database" class="tab-content">
+            <h2 class="text-3xl font-bold mb-6 border-b border-gray-700 pb-2">Database Management (I/O)</h2>
+            
+            <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg mb-8">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold mb-2 text-neon">Architettura Dati (In-Memory JSON)</h3>
+                    <p class="text-gray-400 text-sm">Per garantire la storicizzazione dei dati fino a 3+ anni bypassando i limiti e la volatilità della memoria del browser, il sistema genera un payload JSON. <strong>Scarica questo file regolarmente per creare backup del tuo fisico.</strong></p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Export -->
+                    <div class="border border-gray-600 rounded-lg p-6 bg-darkbg text-center">
+                        <i class="fas fa-file-export text-4xl text-neon mb-4"></i>
+                        <h4 class="text-lg font-bold mb-2">Esporta Dati (Download)</h4>
+                        <p class="text-xs text-gray-500 mb-4">Genera un file JSON contenente tutte le tue pianificazioni e gli allenamenti.</p>
+                        <button onclick="exportDatabase()" class="w-full bg-neon text-darkbg font-bold py-2 px-4 rounded hover:bg-cyan-300 transition">
+                            Scarica Backup JSON
+                        </button>
+                    </div>
+
+                    <!-- Import -->
+                    <div class="border border-gray-600 rounded-lg p-6 bg-darkbg text-center">
+                        <i class="fas fa-file-import text-4xl text-green-400 mb-4"></i>
+                        <h4 class="text-lg font-bold mb-2">Importa Dati (Upload)</h4>
+                        <p class="text-xs text-gray-500 mb-4">Carica un file JSON precedentemente salvato per ripristinare il database di sistema.</p>
+                        <input type="file" id="import-file" accept=".json" class="hidden" onchange="importDatabase(event)">
+                        <button onclick="document.getElementById('import-file').click()" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-400 transition">
+                            Seleziona File JSON
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-8 border-t border-gray-700 pt-6">
+                    <h4 class="text-md font-bold mb-2 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone</h4>
+                    <button onclick="clearDatabase()" class="bg-red-900/50 text-red-200 border border-red-700 py-2 px-4 rounded hover:bg-red-800 transition text-sm">
+                        Formatta Database (Reset Totale)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Container per i Toast Messages -->
+    <div id="toast-container"></div>
+
+    <!-- MAIN LOGIC (CONTROLLER & MODEL) -->
+    <script>
+        // --- 1. STATE MANAGEMENT (THE MODEL) ---
+        // Contiene tutti i dati dell'app in memoria.
+        let appState = {
+            version: "1.2",
+            lastUpdated: new Date().toISOString(),
+            macrocycles: [],  // Array di { id, name, start, end, mesocycles: [{id, name, start, end, routines: []}] }
+            workouts: []      // Array di { id, date, focus, exercises: [{name, sets, reps, weight}], volume }
+        };
+
+        let currentDraftExercises = [];
+        let volumeChartInstance = null;
+        let muscleChartInstance = null;
+        let rpeChartInstance = null; // NUOVA VARIABILE: Istanza grafico RPE
+        
+        // Variabili globali per la navigazione del costruttore schede
+        let currentViewMacroId = null;
+        let currentViewMesoId = null;
+
+        // --- 2. CORE FUNCTIONS & INITIALIZATION ---
+        
+        // Imposta la data odierna di default nel form (Timezone-Safe)
+        const initDate = new Date();
+        initDate.setMinutes(initDate.getMinutes() - initDate.getTimezoneOffset());
+        document.getElementById('workout-date').value = initDate.toISOString().split('T')[0];
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'bg-red-500 text-white' : ''}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        // --- 3. UI NAVIGATION (VIEW CONTROLLER) ---
+        function switchTab(tabId) {
+            // Nascondi tutti i tab
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Resetta stile bottoni nav
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-gray-700', 'text-white');
+                btn.classList.add('text-gray-400');
+            });
+            
+            // Mostra tab selezionato
+            document.getElementById(tabId).classList.add('active');
+            // Evidenzia bottone
+            const activeBtn = document.querySelector(`.nav-btn[data-target="${tabId}"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-gray-700', 'text-white');
+                activeBtn.classList.remove('text-gray-400');
+            }
+
+            // Azioni specifiche on-load dei tab
+            if (tabId === 'dashboard') updateDashboard();
+            if (tabId === 'season') renderMacrocycles();
+            if (tabId === 'analytics') {
+                renderAnalyticsChart();
+                renderCalendar(); // FORZA IL RENDERING DEL CALENDARIO ALL'APERTURA DEL TAB
+            }
+        }
+
+        // --- 4. SEASON PLANNER LOGIC (MACRO & MESO) ---
+        
+        // Aggiunta Macrociclo
+        document.getElementById('macro-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('macro-name').value;
+            const start = document.getElementById('macro-start').value;
+            const end = document.getElementById('macro-end').value;
+
+            if (new Date(start) > new Date(end)) {
+                showToast('Errore Logico: La data di inizio deve precedere la fine.', 'error');
+                return;
+            }
+
+            const newMacro = {
+                id: 'macro_' + Date.now(),
+                name: name,
+                start: start,
+                end: end,
+                mesocycles: [] // Inizializza array vuoto per i sottomoduli
+            };
+
+            appState.macrocycles.push(newMacro);
+            appState.macrocycles.sort((a, b) => new Date(a.start) - new Date(b.start));
+            
+            this.reset();
+            renderMacrocycles();
+            updateDashboard();
+            showToast('Macrociclo allocato in memoria.');
+        });
+
+        // Aggiunta Mesociclo (innestato)
+        function addMesocycle(macroId) {
+            const nameInput = document.getElementById(`meso-name-${macroId}`);
+            const startInput = document.getElementById(`meso-start-${macroId}`);
+            const endInput = document.getElementById(`meso-end-${macroId}`);
+
+            const name = nameInput.value;
+            const start = startInput.value;
+            const end = endInput.value;
+
+            if (!name || !start || !end) {
+                showToast('Compila tutti i campi del Mesociclo.', 'error');
+                return;
+            }
+
+            if (new Date(start) > new Date(end)) {
+                showToast('Errore Logico: La data di inizio deve precedere la fine.', 'error');
+                return;
+            }
+
+            const macroIndex = appState.macrocycles.findIndex(m => m.id === macroId);
+            if (macroIndex === -1) return;
+
+            // Opzionale: Controllo che il meso sia compreso nelle date del macro
+            const macroStart = new Date(appState.macrocycles[macroIndex].start);
+            const macroEnd = new Date(appState.macrocycles[macroIndex].end);
+            const mesoStart = new Date(start);
+            const mesoEnd = new Date(end);
+
+            if (mesoStart < macroStart || mesoEnd > macroEnd) {
+                showToast('Attenzione: Le date del Mesociclo escono dal range del Macrociclo padre.', 'error');
+            }
+
+            const newMeso = {
+                id: 'meso_' + Date.now(),
+                name: name,
+                start: start,
+                end: end,
+                routines: [] // Inizializzazione array per le Schede di allenamento
+            };
+
+            appState.macrocycles[macroIndex].mesocycles.push(newMeso);
+            appState.macrocycles[macroIndex].mesocycles.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+            renderMacrocycles();
+            updateDashboard();
+            showToast('Mesociclo aggiunto al blocco.');
+        }
+
+        function deleteMacrocycle(id) {
+            if(confirm('Eliminando il Macrociclo eliminerai anche tutti i Mesocicli al suo interno. Procedere?')) {
+                appState.macrocycles = appState.macrocycles.filter(m => m.id !== id);
+                renderMacrocycles();
+                updateDashboard();
+                showToast('Macrociclo rimosso.');
+            }
+        }
+
+        function deleteMesocycle(macroId, mesoId) {
+            const macroIndex = appState.macrocycles.findIndex(m => m.id === macroId);
+            if (macroIndex !== -1) {
+                appState.macrocycles[macroIndex].mesocycles = appState.macrocycles[macroIndex].mesocycles.filter(m => m.id !== mesoId);
+                renderMacrocycles();
+                updateDashboard();
+                showToast('Mesociclo rimosso.');
+            }
+        }
+
+        // Renderizza l'albero Macrocicli -> Mesocicli
+        function renderMacrocycles() {
+            const container = document.getElementById('macrocycles-container');
+            if(!container) return; // Sicurezza
+            container.innerHTML = '';
+
+            if (appState.macrocycles.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 italic p-6 border border-dashed border-gray-600 rounded">Nessuna struttura allocata. Crea il tuo primo Macrociclo.</div>';
+                return;
+            }
+
+            const today = new Date();
+
+            appState.macrocycles.forEach(macro => {
+                const macroStart = new Date(macro.start);
+                const macroEnd = new Date(macro.end);
+                
+                let macroStatus = '<span class="px-2 py-1 rounded text-xs font-bold bg-gray-700 text-gray-400 border border-gray-500">Idle/Future</span>';
+                let borderColor = 'border-gray-700';
+                
+                if (today >= macroStart && today <= macroEnd) {
+                    macroStatus = '<span class="px-2 py-1 rounded text-xs font-bold bg-green-900/50 text-green-400 border border-green-700 animate-pulse">Running</span>';
+                    borderColor = 'border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]';
+                } else if (today > macroEnd) {
+                    macroStatus = '<span class="px-2 py-1 rounded text-xs font-bold bg-red-900/30 text-red-500 border border-red-800">Terminated</span>';
+                }
+
+                const macroDiv = document.createElement('div');
+                macroDiv.className = `bg-panelbg rounded-xl border ${borderColor} overflow-hidden`;
+                
+                // HEADER MACROCICLO
+                let html = `
+                    <div class="bg-gray-800 p-4 flex justify-between items-center border-b border-gray-700">
+                        <div>
+                            <h4 class="text-xl font-bold text-white"><i class="fas fa-folder text-yellow-500 mr-2"></i>${macro.name}</h4>
+                            <p class="text-xs text-gray-400 mt-1">${macroStart.toLocaleDateString()} - ${macroEnd.toLocaleDateString()} | Status: ${macroStatus}</p>
+                        </div>
+                        <button onclick="deleteMacrocycle('${macro.id}')" class="text-gray-500 hover:text-red-400 transition" title="Elimina Macrociclo"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                    <div class="p-4">
+                `;
+
+                // LISTA MESOCICLI
+                if (macro.mesocycles && macro.mesocycles.length > 0) {
+                    html += `<div class="mb-4 bg-darkbg rounded border border-gray-700 overflow-hidden">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-800 text-gray-400">
+                                        <tr>
+                                            <th class="p-2 pl-4"><i class="fas fa-level-down-alt mr-2"></i>Mesociclo</th>
+                                            <th class="p-2">Periodo</th>
+                                            <th class="p-2">Status</th>
+                                            <th class="p-2 text-right pr-4">Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    
+                    macro.mesocycles.forEach(meso => {
+                        const mesoStart = new Date(meso.start);
+                        const mesoEnd = new Date(meso.end);
+                        
+                        let mesoStatus = '<span class="text-gray-500 text-xs"><i class="fas fa-clock mr-1"></i>Attesa</span>';
+                        if (today >= mesoStart && today <= mesoEnd) {
+                            mesoStatus = '<span class="text-neon font-bold text-xs"><i class="fas fa-play mr-1"></i>Attivo</span>';
+                        } else if (today > mesoEnd) {
+                            mesoStatus = '<span class="text-gray-600 text-xs"><i class="fas fa-check-circle mr-1"></i>Concluso</span>';
+                        }
+
+                        html += `
+                            <tr class="border-t border-gray-700 hover:bg-gray-800/50 transition">
+                                <td class="p-2 pl-4 font-bold text-gray-200 cursor-pointer hover:text-neon transition" onclick="openMesocycle('${macro.id}', '${meso.id}')"><i class="fas fa-edit text-gray-500 mr-2"></i>${meso.name}</td>
+                                <td class="p-2 text-gray-400">${mesoStart.toLocaleDateString()} - ${mesoEnd.toLocaleDateString()}</td>
+                                <td class="p-2">${mesoStatus}</td>
+                                <td class="p-2 text-right pr-4">
+                                    <button onclick="openMesocycle('${macro.id}', '${meso.id}')" class="text-neon hover:text-cyan-300 transition mr-3" title="Costruisci Scheda"><i class="fas fa-hammer"></i></button>
+                                    <button onclick="deleteMesocycle('${macro.id}', '${meso.id}')" class="text-gray-500 hover:text-red-400 transition" title="Elimina Mesociclo"><i class="fas fa-times"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    html += `</tbody></table></div>`;
+                } else {
+                    html += `<p class="text-sm text-gray-500 italic mb-4">Nessun Mesociclo definito in questa root.</p>`;
+                }
+
+                // FORM AGGIUNTA MESOCICLO
+                html += `
+                        <div class="bg-gray-800/50 p-3 rounded border border-gray-700 border-dashed flex flex-wrap gap-2 items-end">
+                            <div class="flex-1 min-w-[150px]">
+                                <label class="block text-xs text-gray-400 mb-1">Tipo Mesociclo</label>
+                                <select id="meso-name-${macro.id}" class="w-full bg-darkbg border border-gray-600 rounded p-1.5 text-white focus:border-neon text-sm cursor-pointer">
+                                    <option value="" disabled selected>-- Seleziona Fase --</option>
+                                    <option value="Fase di Forza">Fase di Forza</option>
+                                    <option value="Fase Ipertrofia">Fase Ipertrofia</option>
+                                    <option value="Fase Metabolica">Fase Metabolica</option>
+                                    <option value="Deload">Deload (Scarico)</option>
+                                </select>
+                            </div>
+                            <div class="w-32">
+                                <label class="block text-xs text-gray-400 mb-1">Inizio</label>
+                                <input type="date" id="meso-start-${macro.id}" class="w-full bg-darkbg border border-gray-600 rounded p-1.5 text-white focus:border-neon text-sm">
+                            </div>
+                            <div class="w-32">
+                                <label class="block text-xs text-gray-400 mb-1">Fine</label>
+                                <input type="date" id="meso-end-${macro.id}" class="w-full bg-darkbg border border-gray-600 rounded p-1.5 text-white focus:border-neon text-sm">
+                            </div>
+                            <button onclick="addMesocycle('${macro.id}')" class="bg-gray-700 hover:bg-neon hover:text-darkbg text-white font-bold py-1.5 px-3 rounded transition text-sm">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                macroDiv.innerHTML = html;
+                container.appendChild(macroDiv);
+            });
+        }
+
+        // --- 4.5 ROUTINE BUILDER LOGIC (COSTRUTTORE SCHEDE) ---
+        
+        function openMesocycle(macroId, mesoId) {
+            currentViewMacroId = macroId;
+            currentViewMesoId = mesoId;
+            
+            const macro = appState.macrocycles.find(m => m.id === macroId);
+            const meso = macro?.mesocycles.find(m => m.id === mesoId);
+            
+            if(!meso) return;
+
+            document.getElementById('season-main-view').classList.add('hidden');
+            document.getElementById('season-meso-view').classList.remove('hidden');
+            
+            document.getElementById('meso-view-title').innerText = meso.name;
+            document.getElementById('meso-view-dates').innerHTML = `<i class="fas fa-calendar-alt mr-2"></i>${new Date(meso.start).toLocaleDateString()} - ${new Date(meso.end).toLocaleDateString()}`;
+            
+            // Retrocompatibilità per DB esistenti senza array routines
+            if(!meso.routines) meso.routines = [];
+            
+            renderRoutines();
+        }
+
+        function closeMesocycle() {
+            currentViewMacroId = null;
+            currentViewMesoId = null;
+            document.getElementById('season-meso-view').classList.add('hidden');
+            document.getElementById('season-main-view').classList.remove('hidden');
+        }
+
+        function addRoutine() {
+            const nameInput = document.getElementById('routine-name-input');
+            const name = nameInput.value;
+            if(!name) {
+                showToast('Inserisci un nome per la scheda.', 'error');
+                return;
+            }
+
+            const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
+            const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
+            
+            if(!meso.routines) meso.routines = [];
+            
+            meso.routines.push({
+                id: 'rout_' + Date.now(),
+                name: name,
+                exercises: []
+            });
+
+            nameInput.value = '';
+            renderRoutines();
+            updateDashboard(); // Aggiorna i selettori se è il meso attivo
+            showToast('Scheda creata!');
+        }
+
+        function deleteRoutine(routineId) {
+            const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
+            const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
+            meso.routines = meso.routines.filter(r => r.id !== routineId);
+            renderRoutines();
+            updateDashboard();
+        }
+
+        function addExToRoutine(routineId) {
+            const name = document.getElementById(`new-ex-name-${routineId}`).value;
+            const target = document.getElementById(`new-ex-target-${routineId}`).value || 'Globale';
+            const sets = parseInt(document.getElementById(`new-ex-sets-${routineId}`).value) || 0;
+            const reps = parseInt(document.getElementById(`new-ex-reps-${routineId}`).value) || 0;
+            const weight = parseFloat(document.getElementById(`new-ex-weight-${routineId}`).value) || 0;
+            const rest = document.getElementById(`new-ex-rest-${routineId}`).value;
+            const rpe = document.getElementById(`new-ex-rpe-${routineId}`).value;
+            const tech = document.getElementById(`new-ex-tech-${routineId}`).value;
+
+            if(!name || sets <= 0 || reps <= 0) {
+                showToast('Compila Nome, Serie e Ripetizioni.', 'error');
+                return;
+            }
+
+            const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
+            const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
+            const routine = meso.routines.find(r => r.id === routineId);
+
+            routine.exercises.push({ name, target, sets, reps, weight, rest, rpe, technique: tech });
+            renderRoutines();
+        }
+        
+        function removeExFromRoutine(routineId, exIndex) {
+            const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
+            const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
+            const routine = meso.routines.find(r => r.id === routineId);
+            routine.exercises.splice(exIndex, 1);
+            renderRoutines();
+        }
+
+        // NUOVA FUNZIONE: Validazione e Salvataggio Scheda
+        function saveRoutine(routineId) {
+            const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
+            const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
+            const routine = meso.routines.find(r => r.id === routineId);
+
+            // Controllo di Validazione (Exception Handling)
+            if (!routine || routine.exercises.length === 0) {
+                showToast('Errore di Compilazione: La scheda è vuota. Aggiungi almeno un esercizio prima di salvare.', 'error');
+                return;
+            }
+
+            // Forza la sincronizzazione dello stato globale
+            updateDashboard();
+            
+            // Genera il Toast di conferma (Success Log)
+            showToast(`Modulo '${routine.name}' salvato con successo! È ora disponibile nel Tab Allenamento.`);
+        }
+
+        function renderRoutines() {
+            const container = document.getElementById('routines-container');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
+            const meso = macro?.mesocycles.find(m => m.id === currentViewMesoId);
+
+            if(!meso || !meso.routines || meso.routines.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 italic text-center p-6 border border-dashed border-gray-700 rounded-xl">Nessuna scheda creata per questo Mesociclo.</p>';
+                return;
+            }
+
+            meso.routines.forEach(routine => {
+                let html = `
+                    <div class="bg-panelbg border border-gray-700 rounded-xl overflow-hidden shadow-lg">
+                        <div class="bg-gray-800 p-4 flex justify-between items-center border-b border-gray-700">
+                            <h5 class="text-xl font-bold text-white"><i class="fas fa-file-alt text-neon mr-2"></i>${routine.name}</h5>
+                            <button onclick="deleteRoutine('${routine.id}')" class="text-gray-500 hover:text-red-400 transition" title="Elimina Scheda"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                        <div class="p-4">
+                            <ul class="space-y-2 mb-4">
+                `;
+                
+                if(routine.exercises.length === 0) {
+                    html += `<li class="text-sm text-gray-500 italic">Nessun esercizio inserito.</li>`;
+                } else {
+                    routine.exercises.forEach((ex, idx) => {
+                        const exTargetHtml = ex.target && ex.target !== 'Globale' ? `<span class="bg-purple-900/40 text-purple-400 border border-purple-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2"><i class="fas fa-bullseye mr-1"></i>${ex.target}</span>` : '';
+                        const exRest = ex.rest || '-';
+                        const exRpe = ex.rpe || '-';
+                        const exTechHtml = ex.technique ? `<span class="bg-yellow-600/30 text-yellow-400 border border-yellow-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2"><i class="fas fa-bolt mr-1"></i>${ex.technique}</span>` : '';
+                        html += `
+                            <li class="flex justify-between items-center bg-darkbg p-2 rounded border border-gray-700">
+                                <span><span class="font-bold text-gray-200">${ex.name}</span> ${exTargetHtml} ${exTechHtml} <span class="text-gray-400 text-sm ml-2 block md:inline mt-1 md:mt-0">| ${ex.sets}x${ex.reps} @ Target: ${ex.weight}kg | Rec: ${exRest} | RPE: ${exRpe}</span></span>
+                                <button onclick="removeExFromRoutine('${routine.id}', ${idx})" class="text-red-400 hover:text-red-300 text-xs ml-4"><i class="fas fa-times"></i></button>
+                            </li>
+                        `;
+                    });
+                }
+
+                // Add exercise form inside routine
+                html += `
+                            </ul>
+                            <div class="bg-darkbg p-3 rounded border border-gray-700 flex flex-wrap gap-2 items-end">
+                                <div class="flex-1 min-w-[150px]">
+                                    <label class="block text-xs text-gray-400 mb-1">Esercizio</label>
+                                    <input type="text" id="new-ex-name-${routine.id}" placeholder="es. Squat" class="w-full bg-panelbg border border-gray-600 rounded p-1.5 text-white text-sm focus:border-neon">
+                                </div>
+                                <div class="w-36">
+                                    <label class="block text-xs text-purple-400 mb-1">Target</label>
+                                    <select id="new-ex-target-${routine.id}" class="w-full bg-panelbg border border-gray-600 rounded p-1.5 text-white text-sm focus:border-purple-500 cursor-pointer">
+                                        <option value="" disabled selected>-- Seleziona --</option>
+                                        <optgroup label="Pettorale">
+                                            <option value="Petto Globale">Petto Globale</option>
+                                            <option value="Petto (Claveare/Alto)">Petto (Claveare/Alto)</option>
+                                            <option value="Petto (Costale/Basso)">Petto (Costale/Basso)</option>
+                                        </optgroup>
+                                        <optgroup label="Dorso">
+                                            <option value="Dorso Globale">Dorso Globale</option>
+                                            <option value="Gran Dorsale">Gran Dorsale</option>
+                                            <option value="Trapezio">Trapezio (Sup/Med/Post)</option>
+                                            <option value="Romboidi">Romboidi</option>
+                                        </optgroup>
+                                        <optgroup label="Gambe">
+                                            <option value="Quadricipiti">Quadricipiti</option>
+                                            <option value="Glutei">Glutei</option>
+                                            <option value="Femorali">Femorali (Ischiocrurali)</option>
+                                            <option value="Polpacci">Polpacci (Gastro/Soleo)</option>
+                                        </optgroup>
+                                        <optgroup label="Spalle (Deltoidi)">
+                                            <option value="Spalle Globale">Spalle Globale</option>
+                                            <option value="Deltoide Anteriore">Deltoide Anteriore</option>
+                                            <option value="Deltoide Laterale">Deltoide Laterale</option>
+                                            <option value="Deltoide Posteriore">Deltoide Posteriore</option>
+                                        </optgroup>
+                                        <optgroup label="Braccia">
+                                            <option value="Bicipiti">Bicipiti</option>
+                                            <option value="Tricipiti">Tricipiti</option>
+                                        </optgroup>
+                                        <optgroup label="Altri">
+                                            <option value="Addome">Addome</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="w-16">
+                                    <label class="block text-xs text-gray-400 mb-1">Set</label>
+                                    <input type="number" id="new-ex-sets-${routine.id}" placeholder="4" class="w-full bg-panelbg border border-gray-600 rounded p-1.5 text-white text-sm focus:border-neon">
+                                </div>
+                                <div class="w-16">
+                                    <label class="block text-xs text-gray-400 mb-1">Rep</label>
+                                    <input type="number" id="new-ex-reps-${routine.id}" placeholder="8" class="w-full bg-panelbg border border-gray-600 rounded p-1.5 text-white text-sm focus:border-neon">
+                                </div>
+                                <div class="w-16">
+                                    <label class="block text-xs text-gray-400 mb-1">Kg</label>
+                                    <input type="number" step="0.5" id="new-ex-weight-${routine.id}" placeholder="100" class="w-full bg-panelbg border border-gray-600 rounded p-1.5 text-white text-sm focus:border-neon">
+                                </div>
+                                <div class="w-20">
+                                    <label class="block text-xs text-gray-400 mb-1">Recupero</label>
+                                    <select id="new-ex-rest-${routine.id}" class="w-full bg-panelbg border border-gray-600 rounded p-1.5 text-white text-sm focus:border-neon cursor-pointer">
+                                        <option value="60s">60s</option>
+                                        <option value="90s" selected>90s</option>
+                                        <option value="120s">120s (2m)</option>
+                                        <option value="180s">180s (3m)</option>
+                                        <option value="240s">240s (4m)</option>
+                                    </select>
+                                </div>
+                                <div class="w-20">
+                                    <label class="block text-xs text-gray-400 mb-1">RPE/Ced.</label>
+                                    <select id="new-ex-rpe-${routine.id}" class="w-full bg-panelbg border border-gray-600 rounded p-1.5 text-white text-sm focus:border-neon cursor-pointer">
+                                        <option value="RPE 7">RPE 7</option>
+                                        <option value="RPE 8" selected>RPE 8</option>
+                                        <option value="RPE 9">RPE 9</option>
+                                        <option value="RPE 10 (Ced.)">RPE 10 (Ced.)</option>
+                                        <option value="Oltre Ced.">Oltre Ced.</option>
+                                    </select>
+                                </div>
+                                <div class="w-32">
+                                    <label class="block text-xs text-neon mb-1">Tecnica</label>
+                                    <select id="new-ex-tech-${routine.id}" class="w-full bg-panelbg border border-gray-600 text-neon rounded p-1.5 text-sm focus:border-neon cursor-pointer">
+                                        <option value="">Standard</option>
+                                        <optgroup label="Densità e Volume">
+                                            <option value="Superset">Superset</option>
+                                            <option value="Antagonist Superset">Antagonist Superset</option>
+                                            <option value="Jump Sets">Jump Sets</option>
+                                            <option value="Giant Sets">Giant Sets</option>
+                                        </optgroup>
+                                        <optgroup label="Carico e Cedimento">
+                                            <option value="Rip. Forzate">Rip. Forzate</option>
+                                            <option value="Rip. Parziali">Rip. Parziali</option>
+                                            <option value="Negative">Negative</option>
+                                            <option value="Cheating">Cheating</option>
+                                            <option value="Pre-Exhaust">Pre-Exhaust</option>
+                                        </optgroup>
+                                        <optgroup label="Tensione e Tempo">
+                                            <option value="Peak Contraction">Peak Contraction</option>
+                                            <option value="Isometria">Isometria (Hold)</option>
+                                            <option value="SST">SST</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <button onclick="addExToRoutine('${routine.id}')" class="bg-gray-700 hover:bg-neon hover:text-darkbg text-white font-bold py-1.5 px-3 rounded transition text-sm h-8 flex items-center">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- PULSANTE SALVA SCHEDA -->
+                            <div class="mt-5 pt-4 border-t border-gray-700 flex justify-end">
+                                <button onclick="saveRoutine('${routine.id}')" class="bg-neon text-darkbg font-bold py-2 px-6 rounded hover:bg-cyan-300 transition shadow-[0_0_15px_rgba(0,242,254,0.2)]">
+                                    <i class="fas fa-check-circle mr-2"></i>Salva Scheda Definitiva
+                                </button>
+                            </div>
+                            
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        // --- 5. WORKOUT BUILDER LOGIC ---
+        // Funzione: Aggiorna lo stato dal Live Logging in sala pesi
+        function updateDraftEx(index, field, value) {
+            if (field === 'weight') {
+                currentDraftExercises[index].weight = parseFloat(value) || 0;
+            } else if (field === 'rpe') {
+                currentDraftExercises[index].rpe = value;
+            }
+        }
+
+        function renderDraft() {
+            const bufferContainer = document.getElementById('workout-buffer');
+            const list = document.getElementById('draft-exercises-list');
+            if(!bufferContainer || !list) return;
+
+            list.innerHTML = '';
+
+            if (currentDraftExercises.length === 0) {
+                bufferContainer.classList.add('hidden');
+                return;
+            }
+
+            bufferContainer.classList.remove('hidden');
+            currentDraftExercises.forEach((ex, index) => {
+                const exTargetHtml = ex.target && ex.target !== 'Globale' ? `<span class="bg-purple-900/40 text-purple-400 border border-purple-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2"><i class="fas fa-bullseye mr-1"></i>${ex.target}</span>` : '';
+                const exRest = ex.rest || '-';
+                const exTechHtml = ex.technique ? `<span class="bg-yellow-600/30 text-yellow-400 border border-yellow-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2"><i class="fas fa-bolt mr-1"></i>${ex.technique}</span>` : '';
+                
+                const li = document.createElement('li');
+                li.className = 'flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-800 p-3 rounded-lg border border-gray-700 gap-4';
+                li.innerHTML = `
+                    <div class="flex-1 w-full md:w-auto border-b border-gray-700 pb-3 md:border-0 md:pb-0">
+                        <div class="flex items-center flex-wrap">
+                            <span class="font-bold text-neon text-lg">${ex.name}</span> 
+                            ${exTargetHtml} ${exTechHtml}
+                        </div>
+                        <div class="text-gray-400 text-sm mt-1">
+                            <span class="bg-darkbg px-2 py-1 rounded text-white font-mono"><i class="fas fa-redo-alt text-gray-500 mr-1"></i>${ex.sets} sets x ${ex.reps} reps</span>
+                            <span class="ml-2 bg-darkbg px-2 py-1 rounded"><i class="fas fa-stopwatch text-gray-500 mr-1"></i>${exRest}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-end gap-3 w-full md:w-auto bg-darkbg p-2 rounded border border-gray-600/50">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Kg Reali</label>
+                            <input type="number" step="0.5" value="${ex.weight}" onchange="updateDraftEx(${index}, 'weight', this.value)" class="w-20 bg-panelbg border border-gray-600 rounded p-1.5 text-white focus:border-neon focus:outline-none text-center font-bold">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">RPE Reale</label>
+                            <select onchange="updateDraftEx(${index}, 'rpe', this.value)" class="w-28 bg-panelbg border border-gray-600 rounded p-1.5 text-white focus:border-neon focus:outline-none cursor-pointer text-sm font-bold text-center">
+                                <option value="RPE 7" ${ex.rpe === 'RPE 7' ? 'selected' : ''}>RPE 7</option>
+                                <option value="RPE 8" ${ex.rpe === 'RPE 8' ? 'selected' : ''}>RPE 8</option>
+                                <option value="RPE 9" ${ex.rpe === 'RPE 9' ? 'selected' : ''}>RPE 9</option>
+                                <option value="RPE 10 (Ced.)" ${ex.rpe === 'RPE 10 (Ced.)' ? 'selected' : ''}>RPE 10</option>
+                                <option value="Oltre Ced." ${ex.rpe === 'Oltre Ced.' ? 'selected' : ''}>Oltre Ced.</option>
+                            </select>
+                        </div>
+                        <button onclick="removeDraftEx(${index})" class="text-gray-500 hover:text-red-400 ml-2 mb-1 transition" title="Rimuovi Esercizio dalla Sessione Attuale"><i class="fas fa-trash-alt text-lg"></i></button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function removeDraftEx(index) {
+            currentDraftExercises.splice(index, 1);
+            renderDraft();
+        }
+        
+        function loadRoutineToDraft() {
+            const select = document.getElementById('active-routines-select');
+            if (select.selectedIndex <= 0) return;
+            
+            const option = select.options[select.selectedIndex];
+            const macroId = option.getAttribute('data-macro');
+            const mesoId = option.getAttribute('data-meso');
+            const routineId = option.value;
+
+            const macro = appState.macrocycles.find(m => m.id === macroId);
+            const meso = macro?.mesocycles.find(m => m.id === mesoId);
+            const routine = meso?.routines.find(r => r.id === routineId);
+
+            if (routine && routine.exercises && routine.exercises.length > 0) {
+                // Esecuzione di una Deep Copy (Clonazione) per non modificare il template originale quando aggiorni i pesi sollevati oggi
+                currentDraftExercises = routine.exercises.map(ex => ({...ex}));
+                document.getElementById('workout-focus').value = routine.name;
+                renderDraft();
+                showToast(`Scheda '${routine.name}' caricata nel buffer! Modifica i Kg effettivi prima di fare commit.`);
+            } else {
+                showToast('Questa scheda è vuota. Aggiungi esercizi prima di importarla.', 'error');
+            }
+        }
+
+        function commitWorkout() {
+            const date = document.getElementById('workout-date').value;
+            const focus = document.getElementById('workout-focus').value || 'Unspecified';
+
+            if (!date) {
+                showToast('Data sessione obbligatoria.', 'error');
+                return;
+            }
+            if (currentDraftExercises.length === 0) {
+                showToast('Il buffer è vuoto. Aggiungi esercizi prima di fare commit.', 'error');
+                return;
+            }
+
+            // Calcolo Volume Totale Sessione
+            let totalVolume = 0;
+            currentDraftExercises.forEach(ex => {
+                totalVolume += (ex.sets * ex.reps * ex.weight);
+            });
+
+            const newWorkout = {
+                id: 'wk_' + Date.now(),
+                date: date,
+                focus: focus,
+                exercises: [...currentDraftExercises],
+                totalVolume: totalVolume
+            };
+
+            appState.workouts.push(newWorkout);
+            // Sort decrescente (più recenti prima)
+            appState.workouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Reset UI
+            currentDraftExercises = [];
+            renderDraft();
+            document.getElementById('workout-focus').value = '';
+            
+            updateDashboard();
+            showToast('Commit Eseguito: Allenamento salvato nel Database e sincronizzato sul Calendario!');
+        }
+
+        // --- 6. DASHBOARD LOGIC ---
+        function updateDashboard() {
+            document.getElementById('stat-total-workouts').innerText = appState.workouts.length;
+            
+            const totalKg = appState.workouts.reduce((sum, wk) => sum + wk.totalVolume, 0);
+            document.getElementById('stat-total-volume').innerText = totalKg.toLocaleString();
+
+            // 1. TIMZONE-SAFE DATE CHECK PER STATISTICHE DASHBOARD
+            const todaySafe = new Date();
+            todaySafe.setMinutes(todaySafe.getMinutes() - todaySafe.getTimezoneOffset());
+            const todayStr = todaySafe.toISOString().split('T')[0];
+            const todayNorm = new Date(todayStr); // Normalizza alla mezzanotte UTC per match perfetto
+
+            let currentMacro = null;
+            let currentMeso = null;
+
+            // Ricerca gerarchica
+            for (const macro of appState.macrocycles) {
+                const macStart = new Date(macro.start);
+                const macEnd = new Date(macro.end);
+                macEnd.setHours(23,59,59,999);
+                
+                if (todayNorm >= macStart && todayNorm <= macEnd) {
+                    currentMacro = macro;
+                    if(macro.mesocycles) {
+                        for (const meso of macro.mesocycles) {
+                            const mesStart = new Date(meso.start);
+                            const mesEnd = new Date(meso.end);
+                            mesEnd.setHours(23,59,59,999);
+                            if (todayNorm >= mesStart && todayNorm <= mesEnd) {
+                                currentMeso = meso;
+                                break; 
+                            }
+                        }
+                    }
+                    break; 
+                }
+            }
+
+            // Aggiornamento UI Dashboard
+            const macroSpan = document.getElementById('stat-current-macro');
+            const mesoSpan = document.getElementById('stat-current-meso');
+
+            if (currentMacro) {
+                macroSpan.innerText = `Macro: ${currentMacro.name}`;
+                macroSpan.parentElement.className = "text-xl font-bold text-white mt-1";
+            } else {
+                macroSpan.innerText = "System Idle (No Macro)";
+                macroSpan.parentElement.className = "text-xl font-bold text-gray-500 mt-1";
+            }
+
+            if (currentMeso) {
+                mesoSpan.innerText = `Meso: ${currentMeso.name}`;
+                mesoSpan.parentElement.className = "text-lg font-bold text-neon mt-1";
+            } else {
+                mesoSpan.innerText = "Nessun Meso Definito";
+                mesoSpan.parentElement.className = "text-lg font-bold text-gray-500 mt-1";
+            }
+
+            // 2. OMNI-ACCESS ROUTINE SELECTOR (Sblocco visibilità schede)
+            const routineContainer = document.getElementById('load-routine-container');
+            const routineSelect = document.getElementById('active-routines-select');
+            
+            if (routineContainer && routineSelect) {
+                let optionsHtml = '<option value="" disabled selected>-- Seleziona Scheda --</option>';
+                let hasRoutines = false;
+
+                // Scansiona tutti i Macrocicli e Mesocicli bypassando le date
+                appState.macrocycles.forEach(macro => {
+                    if (macro.mesocycles && macro.mesocycles.length > 0) {
+                        macro.mesocycles.forEach(meso => {
+                            if (meso.routines && meso.routines.length > 0) {
+                                hasRoutines = true;
+                                // Raggruppa le opzioni visivamente per Macro e Meso
+                                optionsHtml += `<optgroup label="[${macro.name}] ${meso.name}">`;
+                                meso.routines.forEach(r => {
+                                    optionsHtml += `<option value="${r.id}" data-macro="${macro.id}" data-meso="${meso.id}">${r.name}</option>`;
+                                });
+                                optionsHtml += `</optgroup>`;
+                            }
+                        });
+                    }
+                });
+
+                if (hasRoutines) {
+                    routineContainer.classList.remove('hidden');
+                    routineSelect.innerHTML = optionsHtml;
+                } else {
+                    routineContainer.classList.add('hidden');
+                }
+            }
+
+            // Recent Logs
+            const logsContainer = document.getElementById('recent-logs-container');
+            if (logsContainer) {
+                logsContainer.innerHTML = '';
+                
+                if (appState.workouts.length === 0) {
+                    logsContainer.innerHTML = '<p class="text-gray-400 italic">Nessun allenamento registrato.</p>';
+                } else {
+                    // Prendi gli ultimi 5
+                    appState.workouts.slice(0, 5).forEach(wk => {
+                        const div = document.createElement('div');
+                        div.className = 'flex justify-between items-center border-b border-gray-700 pb-2 last:border-0';
+                        div.innerHTML = `
+                            <div>
+                                <span class="font-bold text-white">${new Date(wk.date).toLocaleDateString()}</span>
+                                <span class="ml-2 text-sm text-neon">${wk.focus}</span>
+                            </div>
+                            <div class="text-sm text-gray-400">Vol: ${wk.totalVolume} Kg</div>
+                        `;
+                        logsContainer.appendChild(div);
+                    });
+                }
+            }
+            
+            // Forza la sincronizzazione nativa del calendario ogni volta che la dashboard si aggiorna
+            if (typeof renderCalendar === 'function') {
+                renderCalendar();
+            }
+            
+            // Forza l'aggiornamento dei filtri nel tab Analisi
+            if (typeof updateAnalyticsFilters === 'function') {
+                updateAnalyticsFilters();
+            }
+        }
+
+        // --- 7. ANALYTICS LOGIC (Chart.js) ---
+        
+        // NUOVA FUNZIONE: Popola il menu a tendina con i Macro/Meso disponibili
+        function updateAnalyticsFilters() {
+            const select = document.getElementById('analytics-timeframe');
+            if(!select) return;
+
+            const currentVal = select.value; // Salva la selezione attuale
+            let html = `<option value="all">🌍 Tutto lo Storico Globale</option>`;
+
+            appState.macrocycles.forEach(macro => {
+                html += `<optgroup label="[MACRO] ${macro.name} (${macro.start} - ${macro.end})">`;
+                // Value contiene "startDate|endDate" per un filtraggio rapido
+                html += `<option value="${macro.start}|${macro.end}">📊 Intero Macrociclo: ${macro.name}</option>`;
+
+                if(macro.mesocycles && macro.mesocycles.length > 0) {
+                    macro.mesocycles.forEach(meso => {
+                        html += `<option value="${meso.start}|${meso.end}">&nbsp;&nbsp;&nbsp;↳ [MESO] ${meso.name}</option>`;
+                    });
+                }
+                html += `</optgroup>`;
+            });
+
+            select.innerHTML = html;
+
+            // Ripristina la selezione se esiste ancora nel nuovo albero
+            if(Array.from(select.options).some(opt => opt.value === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        function renderAnalyticsChart() {
+            // Se non ci sono allenamenti, pulisci e fermati
+            if (appState.workouts.length === 0) {
+                 resetAnalyticsUI();
+                 return; 
+            }
+
+            // 1. LOGICA DI FILTRAGGIO (DATA SCOPING)
+            const timeframeSelect = document.getElementById('analytics-timeframe');
+            const selectedTimeframe = timeframeSelect ? timeframeSelect.value : 'all';
+
+            let filteredWorkouts = [...appState.workouts];
+
+            if (selectedTimeframe !== 'all') {
+                const [startStr, endStr] = selectedTimeframe.split('|');
+                filteredWorkouts = filteredWorkouts.filter(wk => {
+                    return wk.date >= startStr && wk.date <= endStr;
+                });
+            }
+
+            if (filteredWorkouts.length === 0) {
+                 resetAnalyticsUI();
+                 return;
+            }
+
+            // --- ALGORITMO DI PARSING RPE GLOBALE ---
+            function parseRPE(rpeString) {
+                if (!rpeString || rpeString === '-') return null;
+                if (rpeString.includes('7')) return 7;
+                if (rpeString.includes('8')) return 8;
+                if (rpeString.includes('9')) return 9;
+                if (rpeString.includes('10')) return 10;
+                if (rpeString.includes('Oltre')) return 11;
+                return null;
+            }
+
+            // --- CALCOLO KPI SINTETICI (SERIE ALLENANTI TOTALI) ---
+            let totalVol = 0;
+            let totalSets = 0;
+            let sumRpe = 0;
+            let rpeCount = 0;
+
+            filteredWorkouts.forEach(wk => {
+                totalVol += wk.totalVolume;
+                if (wk.exercises && wk.exercises.length > 0) {
+                    wk.exercises.forEach(ex => {
+                        totalSets += (parseInt(ex.sets) || 0);
+                        const rpeVal = parseRPE(ex.rpe);
+                        if (rpeVal !== null) {
+                            sumRpe += rpeVal;
+                            rpeCount++;
+                        }
+                    });
+                }
+            });
+
+            // Popolamento DOM dei KPI (con controlli di sicurezza)
+            const safeSetText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+            safeSetText('an-stat-workouts', filteredWorkouts.length);
+            safeSetText('an-stat-volume', totalVol.toLocaleString());
+            safeSetText('an-stat-sets', totalSets);
+            safeSetText('an-stat-rpe', rpeCount > 0 ? (sumRpe / rpeCount).toFixed(1) : '-');
+
+            // Ordinamento temporale per i grafici a linee
+            const sortedWorkouts = filteredWorkouts.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const labels = sortedWorkouts.map(wk => new Date(wk.date).toLocaleDateString());
+
+            // --- LOGICA GRAFICO 1: VOLUME LOAD (LINE CHART) ---
+            const canvasVolume = document.getElementById('volumeChart');
+            if (canvasVolume) {
+                const ctxVolume = canvasVolume.getContext('2d');
+                if (volumeChartInstance) volumeChartInstance.destroy();
+
+                const volumeData = sortedWorkouts.map(wk => wk.totalVolume);
+
+                volumeChartInstance = new Chart(ctxVolume, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Volume (Kg) per Sessione',
+                            data: volumeData,
+                            borderColor: '#00f2fe',
+                            backgroundColor: 'rgba(0, 242, 254, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#0f172a',
+                            pointBorderColor: '#00f2fe',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#9ca3af' } },
+                            x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' } }
+                        }
+                    }
+                });
+            }
+
+            // --- LOGICA GRAFICO 2: DISTRIBUZIONE MUSCOLARE E LISTA SERIE ---
+            const canvasMuscle = document.getElementById('muscleChart');
+            const listContainer = document.getElementById('muscle-sets-list');
+            if (canvasMuscle) {
+                const ctxMuscle = canvasMuscle.getContext('2d');
+                if (muscleChartInstance) muscleChartInstance.destroy();
+                if (listContainer) listContainer.innerHTML = '';
+
+                const muscleCounts = {};
+                sortedWorkouts.forEach(wk => {
+                    if (wk.exercises && wk.exercises.length > 0) {
+                        wk.exercises.forEach(ex => {
+                            const targetName = ex.target || 'Non Specificato';
+                            const setsCount = parseInt(ex.sets) || 0;
+                            if (muscleCounts[targetName]) {
+                                muscleCounts[targetName] += setsCount;
+                            } else {
+                                muscleCounts[targetName] = setsCount;
+                            }
+                        });
+                    }
+                });
+
+                const sortedTargets = Object.keys(muscleCounts).sort((a, b) => muscleCounts[b] - muscleCounts[a]);
+                const muscleData = sortedTargets.map(t => muscleCounts[t]);
+                const baseColors = ['rgba(168, 85, 247, 0.8)', 'rgba(0, 242, 254, 0.8)', 'rgba(236, 72, 153, 0.8)', 'rgba(34, 197, 94, 0.8)', 'rgba(234, 179, 8, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(14, 165, 233, 0.8)', 'rgba(249, 115, 22, 0.8)'];
+                const bgColors = sortedTargets.map((_, i) => baseColors[i % baseColors.length]);
+                const borderColors = bgColors.map(c => c.replace('0.8', '1'));
+
+                // Popolamento Lista Testuale (Il conteggio numerico esatto)
+                if (listContainer) {
+                    sortedTargets.forEach((target, i) => {
+                        listContainer.innerHTML += `
+                            <li class="flex justify-between items-center bg-darkbg p-2 rounded border border-gray-700 shadow-sm">
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 rounded-full mr-3 border border-gray-400" style="background-color: ${bgColors[i]}"></span>
+                                    <span class="font-bold text-gray-200 text-sm">${target}</span>
+                                </div>
+                                <span class="text-neon font-bold text-lg">${muscleCounts[target]} <span class="text-[10px] text-gray-500 font-normal uppercase">sets</span></span>
+                            </li>
+                        `;
+                    });
+                }
+
+                muscleChartInstance = new Chart(ctxMuscle, {
+                    type: 'doughnut',
+                    data: {
+                        labels: sortedTargets,
+                        datasets: [{ data: muscleData, backgroundColor: bgColors, borderColor: borderColors, borderWidth: 1, hoverOffset: 10 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '65%',
+                        plugins: {
+                            legend: { display: false }, // Disabilitata la legenda per fare spazio alla lista
+                            tooltip: { callbacks: { label: function(context) { return (context.label ? context.label + ': ' : '') + context.parsed + ' Serie (Sets)'; } } }
+                        }
+                    }
+                });
+            }
+
+            // --- LOGICA GRAFICO 3: TREND RPE MEDIO (LINE CHART) ---
+            const canvasRpe = document.getElementById('rpeChart');
+            if (canvasRpe) {
+                const ctxRpe = canvasRpe.getContext('2d');
+                if (rpeChartInstance) rpeChartInstance.destroy();
+
+                const rpeData = sortedWorkouts.map(wk => {
+                    let totalRpe = 0;
+                    let validExCount = 0;
+                    if (wk.exercises && wk.exercises.length > 0) {
+                        wk.exercises.forEach(ex => {
+                            const rpeVal = parseRPE(ex.rpe);
+                            if (rpeVal !== null) {
+                                totalRpe += rpeVal;
+                                validExCount++;
+                            }
+                        });
+                    }
+                    return validExCount > 0 ? +(totalRpe / validExCount).toFixed(1) : null;
+                });
+
+                rpeChartInstance = new Chart(ctxRpe, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'RPE Medio Sessione',
+                            data: rpeData,
+                            borderColor: '#f97316', 
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#0f172a',
+                            pointBorderColor: '#f97316',
+                            fill: true,
+                            tension: 0.4,
+                            spanGaps: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { min: 6, max: 11.5, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#9ca3af', stepSize: 1 } },
+                            x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Funzione helper per resettare l'interfaccia se il filtro non restituisce nulla
+        function resetAnalyticsUI() {
+             const safeSetText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+             
+             safeSetText('an-stat-workouts', '0');
+             safeSetText('an-stat-volume', '0');
+             safeSetText('an-stat-sets', '0');
+             safeSetText('an-stat-rpe', '-');
+             
+             if (volumeChartInstance) { volumeChartInstance.destroy(); volumeChartInstance = null; }
+             if (muscleChartInstance) { muscleChartInstance.destroy(); muscleChartInstance = null; }
+             if (rpeChartInstance) { rpeChartInstance.destroy(); rpeChartInstance = null; }
+             
+             const listContainer = document.getElementById('muscle-sets-list');
+             if(listContainer) listContainer.innerHTML = '<p class="text-gray-500 text-sm italic">Nessun dato in questo periodo.</p>';
+        }
+
+        // --- 7.5 CALENDAR LOGIC (Registro Log) ---
+        let currentCalendarDate = new Date();
+
+        function changeCalendarMonth(offset) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+            renderCalendar();
+            // Nascondi dettagli quando si cambia mese
+            document.getElementById('calendar-workout-details').classList.add('hidden');
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const monthYearLabel = document.getElementById('calendar-month-year');
+            if (!grid || !monthYearLabel) return;
+
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+            monthYearLabel.innerText = `${monthNames[month]} ${year}`;
+
+            grid.innerHTML = '';
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            // Adattamento per far iniziare la settimana di Lunedì (0 = Domenica, 1 = Lunedì...)
+            let startingDay = firstDay.getDay() - 1;
+            if (startingDay === -1) startingDay = 6; // Se è Domenica, spostala a fine griglia
+
+            // Genera gli slot vuoti pre-inizio mese
+            for (let i = 0; i < startingDay; i++) {
+                grid.innerHTML += `<div class="p-2 bg-darkbg rounded border border-gray-800 opacity-30 min-h-[60px] md:min-h-[80px]"></div>`;
+            }
+
+            // Data odierna Timezone-Safe per evidenziare correttamente il giorno corrente
+            const todaySafe = new Date();
+            todaySafe.setMinutes(todaySafe.getMinutes() - todaySafe.getTimezoneOffset());
+            const todayStr = todaySafe.toISOString().split('T')[0];
+
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                // Generazione stringa data YYYY-MM-DD rigorosa, combacia perfettamente con il salvataggio
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                
+                // Filtra gli allenamenti per questa data
+                const dayWorkouts = appState.workouts.filter(w => w.date === dateStr);
+                
+                let badgeHtml = '';
+                let clickableClass = '';
+                let clickEvent = '';
+
+                if (dayWorkouts.length > 0) {
+                    const wk = dayWorkouts[0]; // Prende il primo allenamento del giorno
+                    badgeHtml = `<div class="mt-1 text-[9px] md:text-[10px] bg-neon text-darkbg font-bold px-1 py-0.5 rounded truncate" title="${wk.focus}">${wk.focus}</div>`;
+                    clickableClass = 'cursor-pointer hover:bg-gray-700 hover:border-neon/50 transition';
+                    clickEvent = `onclick="showCalendarWorkoutDetails('${dateStr}')"`;
+                }
+
+                const isToday = todayStr === dateStr;
+                const todayClass = isToday ? 'border-neon shadow-[0_0_8px_rgba(0,242,254,0.3)] bg-gray-800' : 'border-gray-700 bg-gray-800/60';
+
+                grid.innerHTML += `
+                    <div class="p-1 md:p-2 rounded border ${todayClass} ${clickableClass} min-h-[60px] md:min-h-[80px] flex flex-col relative overflow-hidden" ${clickEvent}>
+                        <span class="text-xs font-bold ${isToday ? 'text-neon' : 'text-gray-400'}">${i}</span>
+                        ${badgeHtml}
+                    </div>
+                `;
+            }
+        }
+
+        // FUNZIONE AGGIORNATA: Visualizzatore Dettagli Allenamento (Log Viewer Avanzato)
+        function showCalendarWorkoutDetails(dateStr) {
+            const detailsPanel = document.getElementById('calendar-workout-details');
+            const workouts = appState.workouts.filter(w => w.date === dateStr);
+            
+            if (workouts.length === 0) return;
+
+            const wk = workouts[0]; 
+            detailsPanel.classList.remove('hidden');
+
+            let exList = wk.exercises.map((ex, idx) => {
+                const exTargetHtml = ex.target && ex.target !== 'Globale' ? `<span class="bg-purple-900/40 text-purple-400 border border-purple-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2"><i class="fas fa-bullseye mr-1"></i>${ex.target}</span>` : '';
+                const exRest = ex.rest || '-';
+                const exRpe = ex.rpe || '-';
+                const exTechHtml = ex.technique ? `<span class="bg-yellow-600/30 text-yellow-400 border border-yellow-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded ml-2"><i class="fas fa-bolt mr-1"></i>${ex.technique}</span>` : '';
+                
+                return `
+                    <li class="flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-800 p-3 rounded-lg border border-gray-700 gap-2 mb-2 last:mb-0 shadow-sm">
+                        <div class="flex-1 w-full md:w-auto">
+                            <div class="flex items-center flex-wrap">
+                                <span class="font-bold text-neon text-base">${idx + 1}. ${ex.name}</span> 
+                                ${exTargetHtml} ${exTechHtml}
+                            </div>
+                            <div class="text-gray-400 text-sm mt-1">
+                                <span class="bg-darkbg px-2 py-1 rounded text-white font-mono border border-gray-600"><i class="fas fa-redo-alt text-gray-500 mr-1"></i>${ex.sets} sets x ${ex.reps} reps</span>
+                                <span class="ml-2 bg-darkbg px-2 py-1 rounded border border-gray-600"><i class="fas fa-stopwatch text-gray-500 mr-1"></i>${exRest}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3 w-full md:w-auto bg-darkbg p-2 rounded border border-neon/30 mt-2 md:mt-0 shadow-[inset_0_0_10px_rgba(0,242,254,0.05)]">
+                            <div class="text-center px-3 border-r border-gray-700">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Kg Reali</p>
+                                <p class="text-lg font-bold text-white">${ex.weight}</p>
+                            </div>
+                            <div class="text-center px-3">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">RPE</p>
+                                <p class="text-sm font-bold text-white">${exRpe}</p>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            detailsPanel.innerHTML = `
+                <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-3">
+                    <div>
+                        <h4 class="text-neon font-bold text-lg"><i class="fas fa-clipboard-check mr-2"></i>Log di Sistema: ${new Date(dateStr).toLocaleDateString()}</h4>
+                        <p class="text-xs text-gray-400 mt-1 uppercase tracking-wider">Focus Sessione: <span class="text-white font-bold">${wk.focus}</span> | Volume Totale: <span class="text-white font-bold">${wk.totalVolume} kg</span></p>
+                    </div>
+                    <button onclick="document.getElementById('calendar-workout-details').classList.add('hidden')" class="text-gray-500 hover:text-red-400 transition bg-darkbg p-2 rounded-full h-8 w-8 flex items-center justify-center border border-gray-600"><i class="fas fa-times"></i></button>
+                </div>
+                <ul class="space-y-1">
+                    ${exList}
+                </ul>
+            `;
+            
+            // Scroll fluido verso il pannello dettagli
+            detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // --- 8. DATABASE I/O LOGIC (The 3-Year Solution) ---
+        function exportDatabase() {
+            appState.lastUpdated = new Date().toISOString();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            const fileName = `strategy_program_backup_${new Date().toISOString().split('T')[0]}.json`;
+            downloadAnchorNode.setAttribute("download", fileName);
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            showToast('Backup JSON generato con successo. Conservalo in un posto sicuro!');
+        }
+
+        function importDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    // Validazione basica strutturale per v1.1 e v1.2
+                    if (importedData.macrocycles && importedData.workouts) {
+                        appState = importedData;
+                        updateDashboard();
+                        showToast('Database ripristinato con successo dal file JSON!');
+                        document.getElementById('import-file').value = ''; 
+                    } else if (importedData.seasonPhases) {
+                        // Retrocompatibilità: se si importa un DB v1.0
+                        showToast('Rilevato DB v1.0. Il sistema attuale richiede v1.2 (Macro/Meso). Formattazione necessaria.', 'error');
+                    } else {
+                        showToast('File JSON non valido. Struttura non compatibile.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Errore di parsing del file JSON.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearDatabase() {
+            if(confirm("ATTENZIONE! Stai per eseguire un 'Drop Table' su tutti i tuoi dati di allenamento. Questa operazione è irreversibile a meno che tu non abbia un backup JSON. Procedere?")) {
+                appState = {
+                    version: "1.2",
+                    lastUpdated: new Date().toISOString(),
+                    macrocycles: [],
+                    workouts: []
+                };
+                updateDashboard();
+                renderMacrocycles();
+                if(volumeChartInstance) volumeChartInstance.destroy();
+                showToast('Database resettato. Memoria di sistema pulita.', 'error');
+            }
+        }
+
+        // Run on boot
+        updateDashboard();
+
+    </script>
+</body>
+</html>
