@@ -2,10 +2,11 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Strategy Program | Training Manager</title>
+    <!-- Favicon generata direttamente dall'SVG del manubrio con colore Neon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2300f2fe' d='M448 160v192c0 17.7-14.3 32-32 32h-32v48c0 17.7-14.3 32-32 32h-32c-17.7 0-32-14.3-32-32v-48H224v48c0 17.7-14.3 32-32 32h-32c-17.7 0-32-14.3-32-32v-48H96c-17.7 0-32-14.3-32-32V160c0-17.7 14.3-32 32-32h32V80c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32v48h64V80c0-17.7 14.3-32 32-32h32c17.7 0 32 14.3 32 32v48h32c17.7 0 32 14.3 32 32zm-224 48v96h64v-96h-64z'/%3E%3C/svg%3E" type="image/svg+xml">
+    
     <!-- Tailwind CSS per la UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js per le Analytics -->
@@ -57,8 +58,9 @@
                 <li><button onclick="switchTab('database')" class="nav-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 transition" data-target="database"><i class="fas fa-database w-6"></i> Database I/O</button></li>
             </ul>
         </div>
-        <div class="mt-8 text-xs text-gray-500 text-center">
-            System v1.2 | Status: <span class="text-green-400">Online</span>
+        <div class="mt-8 text-xs text-gray-500 text-center flex flex-col gap-1 items-center justify-center">
+            <span>System v1.3</span>
+            <span id="cloud-status" class="flex items-center text-yellow-500"><i class="fas fa-spinner fa-spin mr-2"></i> Inizializzazione Cloud...</span>
         </div>
     </nav>
 
@@ -88,7 +90,6 @@
             <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg">
                 <h3 class="text-xl font-bold mb-4"><i class="fas fa-history mr-2"></i>Ultimi Log di Sistema</h3>
                 <div id="recent-logs-container" class="space-y-3">
-                    <!-- Popolato dinamicamente -->
                     <p class="text-gray-400 italic">Nessun allenamento registrato. Inizia a compilare codice in sala pesi.</p>
                 </div>
             </div>
@@ -313,37 +314,37 @@
             
             <div class="bg-panelbg p-6 rounded-xl border border-gray-700 shadow-lg mb-8">
                 <div class="mb-6">
-                    <h3 class="text-xl font-bold mb-2 text-neon">Architettura Dati (In-Memory JSON)</h3>
-                    <p class="text-gray-400 text-sm">Per garantire la storicizzazione dei dati fino a 3+ anni bypassando i limiti e la volatilità della memoria del browser, il sistema genera un payload JSON. <strong>Scarica questo file regolarmente per creare backup del tuo fisico.</strong></p>
+                    <h3 class="text-xl font-bold mb-2 text-neon"><i class="fas fa-server mr-2"></i>Architettura Dati (Cloud-First)</h3>
+                    <p class="text-gray-400 text-sm">Il sistema è ora integrato con l'infrastruttura <strong>Google Firebase</strong>. I tuoi allenamenti vengono salvati in tempo reale sul server e vincolati al tuo ID anonimo, garantendo la sincronizzazione incrociata su qualsiasi dispositivo.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Export -->
-                    <div class="border border-gray-600 rounded-lg p-6 bg-darkbg text-center">
-                        <i class="fas fa-file-export text-4xl text-neon mb-4"></i>
-                        <h4 class="text-lg font-bold mb-2">Esporta Dati (Download)</h4>
-                        <p class="text-xs text-gray-500 mb-4">Genera un file JSON contenente tutte le tue pianificazioni e gli allenamenti.</p>
-                        <button onclick="exportDatabase()" class="w-full bg-neon text-darkbg font-bold py-2 px-4 rounded hover:bg-cyan-300 transition">
-                            Scarica Backup JSON
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 border-t border-gray-700 pt-8">
+                    <!-- Export (Cold Storage) -->
+                    <div class="border border-gray-600 rounded-lg p-6 bg-darkbg text-center opacity-80 hover:opacity-100 transition">
+                        <i class="fas fa-archive text-4xl text-gray-400 mb-4"></i>
+                        <h4 class="text-lg font-bold mb-2">Cold Storage (Download JSON)</h4>
+                        <p class="text-xs text-gray-500 mb-4">Genera un file fisico locale. Utile solo come misura estrema di backup di sicurezza.</p>
+                        <button onclick="exportDatabase()" class="w-full bg-gray-700 text-white font-bold py-2 px-4 rounded hover:bg-gray-600 transition border border-gray-500">
+                            Scarica Backup Offline
                         </button>
                     </div>
 
-                    <!-- Import -->
-                    <div class="border border-gray-600 rounded-lg p-6 bg-darkbg text-center">
-                        <i class="fas fa-file-import text-4xl text-green-400 mb-4"></i>
-                        <h4 class="text-lg font-bold mb-2">Importa Dati (Upload)</h4>
-                        <p class="text-xs text-gray-500 mb-4">Carica un file JSON precedentemente salvato per ripristinare il database di sistema.</p>
+                    <!-- Import (Hard Override) -->
+                    <div class="border border-red-900/50 rounded-lg p-6 bg-darkbg text-center opacity-80 hover:opacity-100 transition relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">DANGER</div>
+                        <i class="fas fa-file-import text-4xl text-red-500 mb-4"></i>
+                        <h4 class="text-lg font-bold mb-2 text-red-400">Hard Override (Upload JSON)</h4>
+                        <p class="text-xs text-gray-500 mb-4">Carica un vecchio JSON. <strong>Attenzione:</strong> Questa azione sovrascriverà irreversibilmente il tuo intero database in Cloud.</p>
                         <input type="file" id="import-file" accept=".json" class="hidden" onchange="importDatabase(event)">
-                        <button onclick="document.getElementById('import-file').click()" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-400 transition">
-                            Seleziona File JSON
+                        <button onclick="document.getElementById('import-file').click()" class="w-full bg-red-900/30 text-red-400 font-bold py-2 px-4 rounded hover:bg-red-800 hover:text-white transition border border-red-700">
+                            Forza Importazione Locale
                         </button>
                     </div>
                 </div>
                 
                 <div class="mt-8 border-t border-gray-700 pt-6">
-                    <h4 class="text-md font-bold mb-2 text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone</h4>
-                    <button onclick="clearDatabase()" class="bg-red-900/50 text-red-200 border border-red-700 py-2 px-4 rounded hover:bg-red-800 transition text-sm">
-                        Formatta Database (Reset Totale)
+                    <button onclick="clearDatabase()" class="bg-transparent text-gray-600 border border-gray-700 py-2 px-4 rounded hover:bg-gray-800 hover:text-red-400 transition text-xs w-full text-left">
+                        <i class="fas fa-skull-crossbones mr-2"></i> Drop Table (Formatta Database Cloud)
                     </button>
                 </div>
             </div>
@@ -357,31 +358,128 @@
     <!-- MAIN LOGIC (CONTROLLER & MODEL) -->
     <script>
         // --- 1. STATE MANAGEMENT (THE MODEL) ---
-        // Contiene tutti i dati dell'app in memoria.
         let appState = {
-            version: "1.2",
+            version: "1.3", // Aggiornato a v1.3 Cloud
             lastUpdated: new Date().toISOString(),
-            macrocycles: [],  // Array di { id, name, start, end, mesocycles: [{id, name, start, end, routines: []}] }
-            workouts: []      // Array di { id, date, focus, exercises: [{name, sets, reps, weight}], volume }
+            macrocycles: [], 
+            workouts: []     
         };
 
         let currentDraftExercises = [];
         let volumeChartInstance = null;
         let muscleChartInstance = null;
-        let rpeChartInstance = null; // NUOVA VARIABILE: Istanza grafico RPE
-        
-        // Variabili globali per la navigazione del costruttore schede
+        let rpeChartInstance = null; 
         let currentViewMacroId = null;
         let currentViewMesoId = null;
 
-        // --- 2. CORE FUNCTIONS & INITIALIZATION ---
+        // --- 1.5 FIREBASE CLOUD SYNC MODULE (The Backend) ---
+        let db, auth, currentUser, appId;
         
-        // Imposta la data odierna di default nel form (Timezone-Safe)
+        async function initFirebase() {
+            if (typeof __firebase_config === 'undefined') {
+                document.getElementById('cloud-status').innerHTML = '<span class="text-gray-500"><i class="fas fa-server mr-1 text-xs"></i>Local Mode Only</span>';
+                console.warn("Configurazione Firebase mancante. Esecuzione su RAM locale attiva.");
+                return;
+            }
+
+            try {
+                // Dynamic Imports per aggirare le restrizioni dei moduli e mantenere globale lo scope UI
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const { getFirestore, doc, setDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'strategy-program';
+
+                // Mandatory Rule 3: Auth First & Await
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Setup Listener sullo stato di autenitcazione
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        document.getElementById('cloud-status').innerHTML = '<span class="text-green-400 font-bold"><i class="fas fa-cloud text-xs mr-1"></i>Cloud Online</span>';
+                        
+                        // Mandatory Rule 1: Exact Path Matching
+                        const stateRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'app_state', 'main_state');
+                        let isInitialLoad = true;
+
+                        // Ascoltatore in Tempo Reale (Zero-Touch Sync)
+                        onSnapshot(stateRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                if (data.macrocycles) appState.macrocycles = data.macrocycles;
+                                if (data.workouts) appState.workouts = data.workouts;
+                                
+                                // UI Refresh Trigger
+                                updateDashboard();
+                                if(document.getElementById('season').classList.contains('active')) {
+                                    renderMacrocycles();
+                                    if(currentViewMesoId) renderRoutines();
+                                }
+                                if(document.getElementById('analytics').classList.contains('active')) {
+                                    renderAnalyticsChart();
+                                }
+
+                                if (isInitialLoad) {
+                                    showToast("Sincronizzazione Cloud stabilita. Database aggiornato.", "success");
+                                    isInitialLoad = false;
+                                }
+                            } else {
+                                // Prima inizializzazione assoluta per un nuovo utente
+                                syncToCloud();
+                            }
+                        }, (error) => {
+                            console.error("Firestore Error:", error);
+                            showToast("Connessione Cloud interrotta.", "error");
+                            document.getElementById('cloud-status').innerHTML = '<span class="text-red-500 font-bold"><i class="fas fa-wifi text-xs mr-1"></i>Offline</span>';
+                        });
+
+                    } else {
+                        currentUser = null;
+                        document.getElementById('cloud-status').innerHTML = '<span class="text-red-500"><i class="fas fa-unlink text-xs mr-1"></i>Disconnesso</span>';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Errore Boot Firebase:", error);
+                document.getElementById('cloud-status').innerHTML = '<span class="text-red-500 font-bold"><i class="fas fa-exclamation-circle text-xs mr-1"></i>Cloud Error</span>';
+            }
+        }
+
+        // Push Engine: Funzione globale per spingere i log su Cloud
+        window.syncToCloud = async function() {
+            if (!currentUser || !db) return; 
+            try {
+                const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                const stateRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'app_state', 'main_state');
+                appState.lastUpdated = new Date().toISOString();
+                
+                // Deep Copy serialization per ripulire l'oggetto prima di Firestore
+                const payload = JSON.parse(JSON.stringify(appState));
+                await setDoc(stateRef, payload);
+            } catch(error) {
+                console.error("Errore Push Cloud:", error);
+                showToast("Errore di sincronizzazione in Cloud.", "error");
+            }
+        };
+
+        // Eseguiamo il boot del database prima di tutto il resto
+        initFirebase();
+
+        // --- 2. CORE FUNCTIONS & INITIALIZATION ---
         const initDate = new Date();
         initDate.setMinutes(initDate.getMinutes() - initDate.getTimezoneOffset());
         document.getElementById('workout-date').value = initDate.toISOString().split('T')[0];
 
-        function showToast(message, type = 'success') {
+        window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type === 'error' ? 'bg-red-500 text-white' : ''}`;
@@ -394,38 +492,29 @@
         }
 
         // --- 3. UI NAVIGATION (VIEW CONTROLLER) ---
-        function switchTab(tabId) {
-            // Nascondi tutti i tab
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            // Resetta stile bottoni nav
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('bg-gray-700', 'text-white');
                 btn.classList.add('text-gray-400');
             });
             
-            // Mostra tab selezionato
             document.getElementById(tabId).classList.add('active');
-            // Evidenzia bottone
             const activeBtn = document.querySelector(`.nav-btn[data-target="${tabId}"]`);
             if(activeBtn) {
                 activeBtn.classList.add('bg-gray-700', 'text-white');
                 activeBtn.classList.remove('text-gray-400');
             }
 
-            // Azioni specifiche on-load dei tab
             if (tabId === 'dashboard') updateDashboard();
             if (tabId === 'season') renderMacrocycles();
             if (tabId === 'analytics') {
                 renderAnalyticsChart();
-                renderCalendar(); // FORZA IL RENDERING DEL CALENDARIO ALL'APERTURA DEL TAB
+                renderCalendar();
             }
         }
 
         // --- 4. SEASON PLANNER LOGIC (MACRO & MESO) ---
-        
-        // Aggiunta Macrociclo
         document.getElementById('macro-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const name = document.getElementById('macro-name').value;
@@ -442,7 +531,7 @@
                 name: name,
                 start: start,
                 end: end,
-                mesocycles: [] // Inizializza array vuoto per i sottomoduli
+                mesocycles: [] 
             };
 
             appState.macrocycles.push(newMacro);
@@ -452,10 +541,10 @@
             renderMacrocycles();
             updateDashboard();
             showToast('Macrociclo allocato in memoria.');
+            syncToCloud(); // <-- Innesco Sincronizzazione Cloud
         });
 
-        // Aggiunta Mesociclo (innestato)
-        function addMesocycle(macroId) {
+        window.addMesocycle = function(macroId) {
             const nameInput = document.getElementById(`meso-name-${macroId}`);
             const startInput = document.getElementById(`meso-start-${macroId}`);
             const endInput = document.getElementById(`meso-end-${macroId}`);
@@ -477,22 +566,12 @@
             const macroIndex = appState.macrocycles.findIndex(m => m.id === macroId);
             if (macroIndex === -1) return;
 
-            // Opzionale: Controllo che il meso sia compreso nelle date del macro
-            const macroStart = new Date(appState.macrocycles[macroIndex].start);
-            const macroEnd = new Date(appState.macrocycles[macroIndex].end);
-            const mesoStart = new Date(start);
-            const mesoEnd = new Date(end);
-
-            if (mesoStart < macroStart || mesoEnd > macroEnd) {
-                showToast('Attenzione: Le date del Mesociclo escono dal range del Macrociclo padre.', 'error');
-            }
-
             const newMeso = {
                 id: 'meso_' + Date.now(),
                 name: name,
                 start: start,
                 end: end,
-                routines: [] // Inizializzazione array per le Schede di allenamento
+                routines: [] 
             };
 
             appState.macrocycles[macroIndex].mesocycles.push(newMeso);
@@ -501,31 +580,33 @@
             renderMacrocycles();
             updateDashboard();
             showToast('Mesociclo aggiunto al blocco.');
+            syncToCloud(); // <-- Innesco Sincronizzazione Cloud
         }
 
-        function deleteMacrocycle(id) {
+        window.deleteMacrocycle = function(id) {
             if(confirm('Eliminando il Macrociclo eliminerai anche tutti i Mesocicli al suo interno. Procedere?')) {
                 appState.macrocycles = appState.macrocycles.filter(m => m.id !== id);
                 renderMacrocycles();
                 updateDashboard();
                 showToast('Macrociclo rimosso.');
+                syncToCloud(); // <-- Innesco Sincronizzazione Cloud
             }
         }
 
-        function deleteMesocycle(macroId, mesoId) {
+        window.deleteMesocycle = function(macroId, mesoId) {
             const macroIndex = appState.macrocycles.findIndex(m => m.id === macroId);
             if (macroIndex !== -1) {
                 appState.macrocycles[macroIndex].mesocycles = appState.macrocycles[macroIndex].mesocycles.filter(m => m.id !== mesoId);
                 renderMacrocycles();
                 updateDashboard();
                 showToast('Mesociclo rimosso.');
+                syncToCloud(); // <-- Innesco Sincronizzazione Cloud
             }
         }
 
-        // Renderizza l'albero Macrocicli -> Mesocicli
-        function renderMacrocycles() {
+        window.renderMacrocycles = function() {
             const container = document.getElementById('macrocycles-container');
-            if(!container) return; // Sicurezza
+            if(!container) return; 
             container.innerHTML = '';
 
             if (appState.macrocycles.length === 0) {
@@ -552,7 +633,6 @@
                 const macroDiv = document.createElement('div');
                 macroDiv.className = `bg-panelbg rounded-xl border ${borderColor} overflow-hidden`;
                 
-                // HEADER MACROCICLO
                 let html = `
                     <div class="bg-gray-800 p-4 flex justify-between items-center border-b border-gray-700">
                         <div>
@@ -564,7 +644,6 @@
                     <div class="p-4">
                 `;
 
-                // LISTA MESOCICLI
                 if (macro.mesocycles && macro.mesocycles.length > 0) {
                     html += `<div class="mb-4 bg-darkbg rounded border border-gray-700 overflow-hidden">
                                 <table class="w-full text-left text-sm">
@@ -606,7 +685,6 @@
                     html += `<p class="text-sm text-gray-500 italic mb-4">Nessun Mesociclo definito in questa root.</p>`;
                 }
 
-                // FORM AGGIUNTA MESOCICLO
                 html += `
                         <div class="bg-gray-800/50 p-3 rounded border border-gray-700 border-dashed flex flex-wrap gap-2 items-end">
                             <div class="flex-1 min-w-[150px]">
@@ -639,8 +717,7 @@
         }
 
         // --- 4.5 ROUTINE BUILDER LOGIC (COSTRUTTORE SCHEDE) ---
-        
-        function openMesocycle(macroId, mesoId) {
+        window.openMesocycle = function(macroId, mesoId) {
             currentViewMacroId = macroId;
             currentViewMesoId = mesoId;
             
@@ -655,20 +732,19 @@
             document.getElementById('meso-view-title').innerText = meso.name;
             document.getElementById('meso-view-dates').innerHTML = `<i class="fas fa-calendar-alt mr-2"></i>${new Date(meso.start).toLocaleDateString()} - ${new Date(meso.end).toLocaleDateString()}`;
             
-            // Retrocompatibilità per DB esistenti senza array routines
             if(!meso.routines) meso.routines = [];
             
             renderRoutines();
         }
 
-        function closeMesocycle() {
+        window.closeMesocycle = function() {
             currentViewMacroId = null;
             currentViewMesoId = null;
             document.getElementById('season-meso-view').classList.add('hidden');
             document.getElementById('season-main-view').classList.remove('hidden');
         }
 
-        function addRoutine() {
+        window.addRoutine = function() {
             const nameInput = document.getElementById('routine-name-input');
             const name = nameInput.value;
             if(!name) {
@@ -689,19 +765,21 @@
 
             nameInput.value = '';
             renderRoutines();
-            updateDashboard(); // Aggiorna i selettori se è il meso attivo
+            updateDashboard(); 
             showToast('Scheda creata!');
+            syncToCloud(); // <-- Innesco Sincronizzazione Cloud
         }
 
-        function deleteRoutine(routineId) {
+        window.deleteRoutine = function(routineId) {
             const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
             const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
             meso.routines = meso.routines.filter(r => r.id !== routineId);
             renderRoutines();
             updateDashboard();
+            syncToCloud(); // <-- Innesco Sincronizzazione Cloud
         }
 
-        function addExToRoutine(routineId) {
+        window.addExToRoutine = function(routineId) {
             const name = document.getElementById(`new-ex-name-${routineId}`).value;
             const target = document.getElementById(`new-ex-target-${routineId}`).value || 'Globale';
             const sets = parseInt(document.getElementById(`new-ex-sets-${routineId}`).value) || 0;
@@ -722,9 +800,11 @@
 
             routine.exercises.push({ name, target, sets, reps, weight, rest, rpe, technique: tech });
             renderRoutines();
+            // NB: Non forziamo il sync al Cloud qui, l'utente DEVE premere "Salva Scheda" 
+            // per evitare scritture Firestore eccessive e disordinate (Optimization Pattern)
         }
         
-        function removeExFromRoutine(routineId, exIndex) {
+        window.removeExFromRoutine = function(routineId, exIndex) {
             const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
             const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
             const routine = meso.routines.find(r => r.id === routineId);
@@ -732,26 +812,22 @@
             renderRoutines();
         }
 
-        // NUOVA FUNZIONE: Validazione e Salvataggio Scheda
-        function saveRoutine(routineId) {
+        window.saveRoutine = function(routineId) {
             const macro = appState.macrocycles.find(m => m.id === currentViewMacroId);
             const meso = macro.mesocycles.find(m => m.id === currentViewMesoId);
             const routine = meso.routines.find(r => r.id === routineId);
 
-            // Controllo di Validazione (Exception Handling)
             if (!routine || routine.exercises.length === 0) {
-                showToast('Errore di Compilazione: La scheda è vuota. Aggiungi almeno un esercizio prima di salvare.', 'error');
+                showToast('Errore di Compilazione: La scheda è vuota. Aggiungi esercizi prima di salvare.', 'error');
                 return;
             }
 
-            // Forza la sincronizzazione dello stato globale
             updateDashboard();
-            
-            // Genera il Toast di conferma (Success Log)
-            showToast(`Modulo '${routine.name}' salvato con successo! È ora disponibile nel Tab Allenamento.`);
+            showToast(`Modulo '${routine.name}' salvato in Cloud con successo!`);
+            syncToCloud(); // <-- Innesco Sincronizzazione Cloud Ufficiale
         }
 
-        function renderRoutines() {
+        window.renderRoutines = function() {
             const container = document.getElementById('routines-container');
             if(!container) return;
             container.innerHTML = '';
@@ -792,7 +868,6 @@
                     });
                 }
 
-                // Add exercise form inside routine
                 html += `
                             </ul>
                             <div class="bg-darkbg p-3 rounded border border-gray-700 flex flex-wrap gap-2 items-end">
@@ -897,10 +972,10 @@
                                 </button>
                             </div>
                             
-                            <!-- PULSANTE SALVA SCHEDA -->
+                            <!-- PULSANTE SALVA SCHEDA (Push to Cloud) -->
                             <div class="mt-5 pt-4 border-t border-gray-700 flex justify-end">
                                 <button onclick="saveRoutine('${routine.id}')" class="bg-neon text-darkbg font-bold py-2 px-6 rounded hover:bg-cyan-300 transition shadow-[0_0_15px_rgba(0,242,254,0.2)]">
-                                    <i class="fas fa-check-circle mr-2"></i>Salva Scheda Definitiva
+                                    <i class="fas fa-cloud-upload-alt mr-2"></i>Salva in Cloud
                                 </button>
                             </div>
                             
@@ -912,8 +987,7 @@
         }
 
         // --- 5. WORKOUT BUILDER LOGIC ---
-        // Funzione: Aggiorna lo stato dal Live Logging in sala pesi
-        function updateDraftEx(index, field, value) {
+        window.updateDraftEx = function(index, field, value) {
             if (field === 'weight') {
                 currentDraftExercises[index].weight = parseFloat(value) || 0;
             } else if (field === 'rpe') {
@@ -921,7 +995,7 @@
             }
         }
 
-        function renderDraft() {
+        window.renderDraft = function() {
             const bufferContainer = document.getElementById('workout-buffer');
             const list = document.getElementById('draft-exercises-list');
             if(!bufferContainer || !list) return;
@@ -975,12 +1049,12 @@
             });
         }
 
-        function removeDraftEx(index) {
+        window.removeDraftEx = function(index) {
             currentDraftExercises.splice(index, 1);
             renderDraft();
         }
         
-        function loadRoutineToDraft() {
+        window.loadRoutineToDraft = function() {
             const select = document.getElementById('active-routines-select');
             if (select.selectedIndex <= 0) return;
             
@@ -994,17 +1068,16 @@
             const routine = meso?.routines.find(r => r.id === routineId);
 
             if (routine && routine.exercises && routine.exercises.length > 0) {
-                // Esecuzione di una Deep Copy (Clonazione) per non modificare il template originale quando aggiorni i pesi sollevati oggi
                 currentDraftExercises = routine.exercises.map(ex => ({...ex}));
                 document.getElementById('workout-focus').value = routine.name;
                 renderDraft();
-                showToast(`Scheda '${routine.name}' caricata nel buffer! Modifica i Kg effettivi prima di fare commit.`);
+                showToast(`Scheda '${routine.name}' importata! Inserisci i Kg effettivi e fai Commit.`);
             } else {
                 showToast('Questa scheda è vuota. Aggiungi esercizi prima di importarla.', 'error');
             }
         }
 
-        function commitWorkout() {
+        window.commitWorkout = function() {
             const date = document.getElementById('workout-date').value;
             const focus = document.getElementById('workout-focus').value || 'Unspecified';
 
@@ -1013,11 +1086,10 @@
                 return;
             }
             if (currentDraftExercises.length === 0) {
-                showToast('Il buffer è vuoto. Aggiungi esercizi prima di fare commit.', 'error');
+                showToast('Il buffer è vuoto. Impossibile salvare.', 'error');
                 return;
             }
 
-            // Calcolo Volume Totale Sessione
             let totalVolume = 0;
             currentDraftExercises.forEach(ex => {
                 totalVolume += (ex.sets * ex.reps * ex.weight);
@@ -1032,35 +1104,32 @@
             };
 
             appState.workouts.push(newWorkout);
-            // Sort decrescente (più recenti prima)
             appState.workouts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            // Reset UI
             currentDraftExercises = [];
             renderDraft();
             document.getElementById('workout-focus').value = '';
             
             updateDashboard();
-            showToast('Commit Eseguito: Allenamento salvato nel Database e sincronizzato sul Calendario!');
+            showToast('Dati salvati e spediti in Cloud!');
+            syncToCloud(); // <-- Innesco Sincronizzazione Cloud
         }
 
         // --- 6. DASHBOARD LOGIC ---
-        function updateDashboard() {
+        window.updateDashboard = function() {
             document.getElementById('stat-total-workouts').innerText = appState.workouts.length;
             
             const totalKg = appState.workouts.reduce((sum, wk) => sum + wk.totalVolume, 0);
             document.getElementById('stat-total-volume').innerText = totalKg.toLocaleString();
 
-            // 1. TIMZONE-SAFE DATE CHECK PER STATISTICHE DASHBOARD
             const todaySafe = new Date();
             todaySafe.setMinutes(todaySafe.getMinutes() - todaySafe.getTimezoneOffset());
             const todayStr = todaySafe.toISOString().split('T')[0];
-            const todayNorm = new Date(todayStr); // Normalizza alla mezzanotte UTC per match perfetto
+            const todayNorm = new Date(todayStr); 
 
             let currentMacro = null;
             let currentMeso = null;
 
-            // Ricerca gerarchica
             for (const macro of appState.macrocycles) {
                 const macStart = new Date(macro.start);
                 const macEnd = new Date(macro.end);
@@ -1083,7 +1152,6 @@
                 }
             }
 
-            // Aggiornamento UI Dashboard
             const macroSpan = document.getElementById('stat-current-macro');
             const mesoSpan = document.getElementById('stat-current-meso');
 
@@ -1103,7 +1171,6 @@
                 mesoSpan.parentElement.className = "text-lg font-bold text-gray-500 mt-1";
             }
 
-            // 2. OMNI-ACCESS ROUTINE SELECTOR (Sblocco visibilità schede)
             const routineContainer = document.getElementById('load-routine-container');
             const routineSelect = document.getElementById('active-routines-select');
             
@@ -1111,13 +1178,11 @@
                 let optionsHtml = '<option value="" disabled selected>-- Seleziona Scheda --</option>';
                 let hasRoutines = false;
 
-                // Scansiona tutti i Macrocicli e Mesocicli bypassando le date
                 appState.macrocycles.forEach(macro => {
                     if (macro.mesocycles && macro.mesocycles.length > 0) {
                         macro.mesocycles.forEach(meso => {
                             if (meso.routines && meso.routines.length > 0) {
                                 hasRoutines = true;
-                                // Raggruppa le opzioni visivamente per Macro e Meso
                                 optionsHtml += `<optgroup label="[${macro.name}] ${meso.name}">`;
                                 meso.routines.forEach(r => {
                                     optionsHtml += `<option value="${r.id}" data-macro="${macro.id}" data-meso="${meso.id}">${r.name}</option>`;
@@ -1136,7 +1201,6 @@
                 }
             }
 
-            // Recent Logs
             const logsContainer = document.getElementById('recent-logs-container');
             if (logsContainer) {
                 logsContainer.innerHTML = '';
@@ -1144,7 +1208,6 @@
                 if (appState.workouts.length === 0) {
                     logsContainer.innerHTML = '<p class="text-gray-400 italic">Nessun allenamento registrato.</p>';
                 } else {
-                    // Prendi gli ultimi 5
                     appState.workouts.slice(0, 5).forEach(wk => {
                         const div = document.createElement('div');
                         div.className = 'flex justify-between items-center border-b border-gray-700 pb-2 last:border-0';
@@ -1160,30 +1223,20 @@
                 }
             }
             
-            // Forza la sincronizzazione nativa del calendario ogni volta che la dashboard si aggiorna
-            if (typeof renderCalendar === 'function') {
-                renderCalendar();
-            }
-            
-            // Forza l'aggiornamento dei filtri nel tab Analisi
-            if (typeof updateAnalyticsFilters === 'function') {
-                updateAnalyticsFilters();
-            }
+            if (typeof window.renderCalendar === 'function') window.renderCalendar();
+            if (typeof window.updateAnalyticsFilters === 'function') window.updateAnalyticsFilters();
         }
 
         // --- 7. ANALYTICS LOGIC (Chart.js) ---
-        
-        // NUOVA FUNZIONE: Popola il menu a tendina con i Macro/Meso disponibili
-        function updateAnalyticsFilters() {
+        window.updateAnalyticsFilters = function() {
             const select = document.getElementById('analytics-timeframe');
             if(!select) return;
 
-            const currentVal = select.value; // Salva la selezione attuale
+            const currentVal = select.value; 
             let html = `<option value="all">🌍 Tutto lo Storico Globale</option>`;
 
             appState.macrocycles.forEach(macro => {
                 html += `<optgroup label="[MACRO] ${macro.name} (${macro.start} - ${macro.end})">`;
-                // Value contiene "startDate|endDate" per un filtraggio rapido
                 html += `<option value="${macro.start}|${macro.end}">📊 Intero Macrociclo: ${macro.name}</option>`;
 
                 if(macro.mesocycles && macro.mesocycles.length > 0) {
@@ -1196,20 +1249,17 @@
 
             select.innerHTML = html;
 
-            // Ripristina la selezione se esiste ancora nel nuovo albero
             if(Array.from(select.options).some(opt => opt.value === currentVal)) {
                 select.value = currentVal;
             }
         }
 
-        function renderAnalyticsChart() {
-            // Se non ci sono allenamenti, pulisci e fermati
+        window.renderAnalyticsChart = function() {
             if (appState.workouts.length === 0) {
-                 resetAnalyticsUI();
+                 window.resetAnalyticsUI();
                  return; 
             }
 
-            // 1. LOGICA DI FILTRAGGIO (DATA SCOPING)
             const timeframeSelect = document.getElementById('analytics-timeframe');
             const selectedTimeframe = timeframeSelect ? timeframeSelect.value : 'all';
 
@@ -1223,11 +1273,10 @@
             }
 
             if (filteredWorkouts.length === 0) {
-                 resetAnalyticsUI();
+                 window.resetAnalyticsUI();
                  return;
             }
 
-            // --- ALGORITMO DI PARSING RPE GLOBALE ---
             function parseRPE(rpeString) {
                 if (!rpeString || rpeString === '-') return null;
                 if (rpeString.includes('7')) return 7;
@@ -1238,7 +1287,6 @@
                 return null;
             }
 
-            // --- CALCOLO KPI SINTETICI (SERIE ALLENANTI TOTALI) ---
             let totalVol = 0;
             let totalSets = 0;
             let sumRpe = 0;
@@ -1258,18 +1306,15 @@
                 }
             });
 
-            // Popolamento DOM dei KPI (con controlli di sicurezza)
             const safeSetText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
             safeSetText('an-stat-workouts', filteredWorkouts.length);
             safeSetText('an-stat-volume', totalVol.toLocaleString());
             safeSetText('an-stat-sets', totalSets);
             safeSetText('an-stat-rpe', rpeCount > 0 ? (sumRpe / rpeCount).toFixed(1) : '-');
 
-            // Ordinamento temporale per i grafici a linee
             const sortedWorkouts = filteredWorkouts.sort((a, b) => new Date(a.date) - new Date(b.date));
             const labels = sortedWorkouts.map(wk => new Date(wk.date).toLocaleDateString());
 
-            // --- LOGICA GRAFICO 1: VOLUME LOAD (LINE CHART) ---
             const canvasVolume = document.getElementById('volumeChart');
             if (canvasVolume) {
                 const ctxVolume = canvasVolume.getContext('2d');
@@ -1305,7 +1350,6 @@
                 });
             }
 
-            // --- LOGICA GRAFICO 2: DISTRIBUZIONE MUSCOLARE E LISTA SERIE ---
             const canvasMuscle = document.getElementById('muscleChart');
             const listContainer = document.getElementById('muscle-sets-list');
             if (canvasMuscle) {
@@ -1334,7 +1378,6 @@
                 const bgColors = sortedTargets.map((_, i) => baseColors[i % baseColors.length]);
                 const borderColors = bgColors.map(c => c.replace('0.8', '1'));
 
-                // Popolamento Lista Testuale (Il conteggio numerico esatto)
                 if (listContainer) {
                     sortedTargets.forEach((target, i) => {
                         listContainer.innerHTML += `
@@ -1358,14 +1401,13 @@
                     options: {
                         responsive: true, maintainAspectRatio: false, cutout: '65%',
                         plugins: {
-                            legend: { display: false }, // Disabilitata la legenda per fare spazio alla lista
+                            legend: { display: false },
                             tooltip: { callbacks: { label: function(context) { return (context.label ? context.label + ': ' : '') + context.parsed + ' Serie (Sets)'; } } }
                         }
                     }
                 });
             }
 
-            // --- LOGICA GRAFICO 3: TREND RPE MEDIO (LINE CHART) ---
             const canvasRpe = document.getElementById('rpeChart');
             if (canvasRpe) {
                 const ctxRpe = canvasRpe.getContext('2d');
@@ -1416,8 +1458,7 @@
             }
         }
 
-        // Funzione helper per resettare l'interfaccia se il filtro non restituisce nulla
-        function resetAnalyticsUI() {
+        window.resetAnalyticsUI = function() {
              const safeSetText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
              
              safeSetText('an-stat-workouts', '0');
@@ -1436,14 +1477,13 @@
         // --- 7.5 CALENDAR LOGIC (Registro Log) ---
         let currentCalendarDate = new Date();
 
-        function changeCalendarMonth(offset) {
+        window.changeCalendarMonth = function(offset) {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
             renderCalendar();
-            // Nascondi dettagli quando si cambia mese
             document.getElementById('calendar-workout-details').classList.add('hidden');
         }
 
-        function renderCalendar() {
+        window.renderCalendar = function() {
             const grid = document.getElementById('calendar-grid');
             const monthYearLabel = document.getElementById('calendar-month-year');
             if (!grid || !monthYearLabel) return;
@@ -1459,25 +1499,19 @@
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
 
-            // Adattamento per far iniziare la settimana di Lunedì (0 = Domenica, 1 = Lunedì...)
             let startingDay = firstDay.getDay() - 1;
-            if (startingDay === -1) startingDay = 6; // Se è Domenica, spostala a fine griglia
+            if (startingDay === -1) startingDay = 6;
 
-            // Genera gli slot vuoti pre-inizio mese
             for (let i = 0; i < startingDay; i++) {
                 grid.innerHTML += `<div class="p-2 bg-darkbg rounded border border-gray-800 opacity-30 min-h-[60px] md:min-h-[80px]"></div>`;
             }
 
-            // Data odierna Timezone-Safe per evidenziare correttamente il giorno corrente
             const todaySafe = new Date();
             todaySafe.setMinutes(todaySafe.getMinutes() - todaySafe.getTimezoneOffset());
             const todayStr = todaySafe.toISOString().split('T')[0];
 
             for (let i = 1; i <= lastDay.getDate(); i++) {
-                // Generazione stringa data YYYY-MM-DD rigorosa, combacia perfettamente con il salvataggio
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-                
-                // Filtra gli allenamenti per questa data
                 const dayWorkouts = appState.workouts.filter(w => w.date === dateStr);
                 
                 let badgeHtml = '';
@@ -1485,7 +1519,7 @@
                 let clickEvent = '';
 
                 if (dayWorkouts.length > 0) {
-                    const wk = dayWorkouts[0]; // Prende il primo allenamento del giorno
+                    const wk = dayWorkouts[0];
                     badgeHtml = `<div class="mt-1 text-[9px] md:text-[10px] bg-neon text-darkbg font-bold px-1 py-0.5 rounded truncate" title="${wk.focus}">${wk.focus}</div>`;
                     clickableClass = 'cursor-pointer hover:bg-gray-700 hover:border-neon/50 transition';
                     clickEvent = `onclick="showCalendarWorkoutDetails('${dateStr}')"`;
@@ -1503,8 +1537,7 @@
             }
         }
 
-        // FUNZIONE AGGIORNATA: Visualizzatore Dettagli Allenamento (Log Viewer Avanzato)
-        function showCalendarWorkoutDetails(dateStr) {
+        window.showCalendarWorkoutDetails = function(dateStr) {
             const detailsPanel = document.getElementById('calendar-workout-details');
             const workouts = appState.workouts.filter(w => w.date === dateStr);
             
@@ -1559,25 +1592,24 @@
                 </ul>
             `;
             
-            // Scroll fluido verso il pannello dettagli
             detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        // --- 8. DATABASE I/O LOGIC (The 3-Year Solution) ---
-        function exportDatabase() {
+        // --- 8. DATABASE I/O LOGIC (Cold Storage) ---
+        window.exportDatabase = function() {
             appState.lastUpdated = new Date().toISOString();
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
             const fileName = `strategy_program_backup_${new Date().toISOString().split('T')[0]}.json`;
             downloadAnchorNode.setAttribute("download", fileName);
-            document.body.appendChild(downloadAnchorNode); // required for firefox
+            document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
-            showToast('Backup JSON generato con successo. Conservalo in un posto sicuro!');
+            showToast('Backup JSON offline generato con successo.');
         }
 
-        function importDatabase(event) {
+        window.importDatabase = function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -1585,15 +1617,12 @@
             reader.onload = function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
-                    // Validazione basica strutturale per v1.1 e v1.2
                     if (importedData.macrocycles && importedData.workouts) {
                         appState = importedData;
                         updateDashboard();
-                        showToast('Database ripristinato con successo dal file JSON!');
+                        showToast('Override eseguito. I dati JSON sono stati caricati e verranno sincronizzati su Cloud.');
                         document.getElementById('import-file').value = ''; 
-                    } else if (importedData.seasonPhases) {
-                        // Retrocompatibilità: se si importa un DB v1.0
-                        showToast('Rilevato DB v1.0. Il sistema attuale richiede v1.2 (Macro/Meso). Formattazione necessaria.', 'error');
+                        syncToCloud(); // Forza la sovrascrittura in Cloud del vecchio file JSON
                     } else {
                         showToast('File JSON non valido. Struttura non compatibile.', 'error');
                     }
@@ -1604,10 +1633,10 @@
             reader.readAsText(file);
         }
 
-        function clearDatabase() {
-            if(confirm("ATTENZIONE! Stai per eseguire un 'Drop Table' su tutti i tuoi dati di allenamento. Questa operazione è irreversibile a meno che tu non abbia un backup JSON. Procedere?")) {
+        window.clearDatabase = function() {
+            if(confirm("ATTENZIONE! Stai per eliminare il database in modo PERMANENTE anche dal Cloud server. Procedere?")) {
                 appState = {
-                    version: "1.2",
+                    version: "1.3",
                     lastUpdated: new Date().toISOString(),
                     macrocycles: [],
                     workouts: []
@@ -1615,13 +1644,10 @@
                 updateDashboard();
                 renderMacrocycles();
                 if(volumeChartInstance) volumeChartInstance.destroy();
-                showToast('Database resettato. Memoria di sistema pulita.', 'error');
+                showToast('Database Cloud raso al suolo. Memoria pulita.', 'error');
+                syncToCloud(); // Cancella fisicamente i dati in Cloud
             }
         }
-
-        // Run on boot
-        updateDashboard();
-
     </script>
 </body>
 </html>
