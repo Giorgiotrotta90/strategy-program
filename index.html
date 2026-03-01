@@ -61,7 +61,7 @@
             </ul>
         </div>
         <div class="mt-8 text-xs text-gray-500 text-center flex flex-col gap-1 items-center justify-center">
-            <span>System v1.3</span>
+            <span>System v1.3.1</span>
             <span id="cloud-status" class="flex items-center text-yellow-500"><i class="fas fa-spinner fa-spin mr-2"></i> Inizializzazione Cloud...</span>
         </div>
     </nav>
@@ -361,7 +361,7 @@
     <script>
         // --- 1. STATE MANAGEMENT (THE MODEL) ---
         let appState = {
-            version: "1.3", // Aggiornato a v1.3 Cloud
+            version: "1.3.1", // Aggiornato per supporto GitHub Standalone
             lastUpdated: new Date().toISOString(),
             macrocycles: [], 
             workouts: []     
@@ -376,30 +376,55 @@
 
         // --- 1.5 FIREBASE CLOUD SYNC MODULE (The Backend) ---
         let db, auth, currentUser, appId;
+
+        // =========================================================================
+        // 🔧 CONFIGURAZIONE CLOUD FIREBASE (INSERISCI QUI I TUOI DATI)
+        // =========================================================================
+        // Sostituisci le stringhe sottostanti con i valori del tuo progetto Firebase.
+        // ATTENZIONE: Mantieni intatte le virgolette doppie ("") attorno ai valori!
+        const MY_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAciIcB13vSK0bSX9_HhIzI-Ytg47ITyO0",
+            authDomain: "strategy-program-db.firebaseapp.com",
+            projectId: "strategy-program-db",
+            storageBucket: "strategy-program-db.firebasestorage.app",
+            messagingSenderId: "515938978114",
+            appId: "1:515938978114:web:dca728a60bfecea71a60db"
+        };
+        // =========================================================================
         
         async function initFirebase() {
-            if (typeof __firebase_config === 'undefined') {
-                document.getElementById('cloud-status').innerHTML = '<span class="text-gray-500"><i class="fas fa-server mr-1 text-xs"></i>Local Mode Only</span>';
-                console.warn("Configurazione Firebase mancante. Esecuzione su RAM locale attiva.");
+            let firebaseConfigToUse = null;
+
+            // Rilevamento automatico dell'ambiente (Canvas Sandbox vs GitHub Pages)
+            if (typeof __firebase_config !== 'undefined') {
+                // Ambiente di sviluppo integrato (Canvas)
+                firebaseConfigToUse = JSON.parse(__firebase_config);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'strategy-program';
+            } else if (MY_FIREBASE_CONFIG.apiKey && MY_FIREBASE_CONFIG.apiKey !== "INSERISCI_QUI_LA_TUA_API_KEY" && MY_FIREBASE_CONFIG.apiKey !== "") {
+                // Ambiente Standalone (GitHub Pages) - Attivato se l'utente inserisce la vera API Key
+                firebaseConfigToUse = MY_FIREBASE_CONFIG;
+                appId = MY_FIREBASE_CONFIG.projectId; // Usiamo il projectId come identificatore unico su GitHub
+            } else {
+                // Nessuna configurazione trovata -> Fallback su Local Storage puro
+                document.getElementById('cloud-status').innerHTML = '<span class="text-gray-500"><i class="fas fa-server mr-1 text-xs"></i>Local Mode (Aggiungi API Keys)</span>';
+                console.warn("Configurazione Firebase mancante o placeholder rilevato. Compila l'oggetto MY_FIREBASE_CONFIG.");
                 return;
             }
 
             try {
-                // Dynamic Imports per aggirare le restrizioni dei moduli e mantenere globale lo scope UI
                 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
                 const { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
                 const { getFirestore, doc, setDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
 
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(firebaseConfigToUse);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'strategy-program';
 
-                // Mandatory Rule 3: Auth First & Await
+                // Autenticazione: Gestione ibrida
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
+                    // Fallback nativo per GitHub: Autenticazione Anonima
                     await signInAnonymously(auth);
                 }
 
@@ -440,7 +465,7 @@
                             }
                         }, (error) => {
                             console.error("Firestore Error:", error);
-                            showToast("Connessione Cloud interrotta.", "error");
+                            showToast("Connessione Cloud interrotta o permessi negati. Controlla le regole Firestore.", "error");
                             document.getElementById('cloud-status').innerHTML = '<span class="text-red-500 font-bold"><i class="fas fa-wifi text-xs mr-1"></i>Offline</span>';
                         });
 
@@ -1638,7 +1663,7 @@
         window.clearDatabase = function() {
             if(confirm("ATTENZIONE! Stai per eliminare il database in modo PERMANENTE anche dal Cloud server. Procedere?")) {
                 appState = {
-                    version: "1.3",
+                    version: "1.3.1",
                     lastUpdated: new Date().toISOString(),
                     macrocycles: [],
                     workouts: []
